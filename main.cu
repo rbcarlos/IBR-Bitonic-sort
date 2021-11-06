@@ -133,7 +133,7 @@ void bitonicSortAdaptiveParallel(
     // note that this does only phasesBitonicSort (log(512) = 9) phases 
     runBitoicSortRegularKernel(d_keys, arrayLength);
     
-    for (int phase = phasesBitonicSort + 1; phase <= phasesAll+1; phase++)
+    for (int phase = phasesBitonicSort; phase <= phasesAll; phase++)
     {
         int stepStart = phase;
         int stepEnd = max((double)phasesBitonicMerge, (double)phase - phasesInitIntervals);
