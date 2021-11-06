@@ -193,7 +193,7 @@ int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval 
     return (diff<0);
 }
 
-main() {
+int main() {
 
     srand(2006);
 
@@ -257,9 +257,10 @@ main() {
     for(int i = 0; i<size_keys-1; i++) {
         if(h[i] < h[i+1]) {
             printf("INVALID");
-            return;
+            return 1;
         }
     }
     printf("VALID");
+    return 0;
 
 }
