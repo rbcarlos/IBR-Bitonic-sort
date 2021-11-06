@@ -1,0 +1,321 @@
+
+#ifndef BITONIC_KERNELS
+#define BITONIC_KERNELS
+
+#include "constants.h"
+
+/*
+Compares 2 elements and exchanges them according to sortOrder.
+*/
+inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
+{
+    if (asc ? (*elem1 > *elem2) : (*elem1 < *elem2))
+    {
+        data_t temp = *elem1;
+        *elem1 = *elem2;
+        *elem2 = temp;
+    }
+}
+
+/*
+Sorts sub-blocks of input data with REGULAR bitonic sort (not NORMALIZED bitonic sort).
+*/
+template <int threadsBitonicSort, int elemsBitonicSort>
+__global__ void bitonicSortRegularKernel(data_t *dataTable, int tableLen)
+{
+    extern __shared__ data_t sortTile[];
+
+    //calculate the offset and length of a block of data processed by the current block
+    int elemsPerThreadBlock = threadsBitonicSort * elemsBitonicSort
+    int offset = blockIdx.x * elemsPerThreadBlock;
+    int dataBlockLength =  offset + elemsPerThreadBlock <= tableLen ? elemsPerThreadBlock : tableLen - offset;
+
+    // If shared memory size is lower than table length, than adjacent blocks have to be ordered in opposite
+    // direction in order to create bitonic sequences.
+    bool blockDirection = 1 ^ (blockIdx.x & 1);
+
+    // Loads data into shared memory with coallesced access
+    for (int tx = threadIdx.x; tx < dataBlockLength; tx += threadsBitonicSort)
+    {
+        sortTile[tx] = dataTable[offset + tx];
+    }
+
+    // Bitonic sort
+    for (int subBlockSize = 1; subBlockSize < dataBlockLength; subBlockSize <<= 1)
+    {
+        //stride or step
+        for (int stride = subBlockSize; stride > 0; stride >>= 1)
+        {
+            __syncthreads();
+            for (int tx = threadIdx.x; tx < dataBlockLength >> 1; tx += threadsBitonicSort)
+            {
+                bool direction = blockDirection ^ ((tx & subBlockSize) != 0);
+                int index = 2 * tx - (tx & (stride - 1));
+
+                if (direction)
+                {
+                    compareExchange(&sortTile[index], &sortTile[index + stride], true);
+                }
+                else
+                {
+                    compareExchange(&sortTile[index], &sortTile[index + stride], false);
+                }
+            }
+        }
+    }
+
+    // Stores sorted elements from shared to global memory
+    __syncthreads();
+    for (int tx = threadIdx.x; tx < dataBlockLength; tx += threadsBitonicSort)
+    {
+        dataTable[offset + tx] = sortTile[tx];
+    }
+}
+
+/*
+From provided interval and index returns element in array. Index can't be greater than interval span.
+*/
+__device__ data_t getArrayKey(data_t *table, interval_t interval, int index)
+{
+    bool useInterval1 = index >= interval.length0;
+    int offset = useInterval1 ? interval.offset1 : interval.offset0;
+
+    index -= useInterval1 ? interval.length0 : 0;
+    index -= useInterval1 && index >= interval.length1 ? interval.length1 : 0;
+
+    return table[offset + index];
+}
+
+/*
+Finds the index q, which is an index, where the exchanges in the bitonic sequence begin. All
+elements after index q have to be exchanged. Bitonic sequence boundaries are provided with interval.
+
+Example: 2, 3, 5, 7 | 8, 7, 3, 1 --> index q = 2 ; (5, 7 and 3, 1 have to be exchanged).
+*/
+inline __device__ int_t binarySearchInterval(data_t* table, interval_t interval, int subBlockHalfLen, bool asc)
+{
+    // Depending which interval is longer, different start and end indexes are used
+    int_t indexStart = interval.length0 <= interval.length1 ? 0 : subBlockHalfLen - interval.length1;
+    int_t indexEnd = interval.length0 <= interval.length1 ? interval.length0 : subBlockHalfLen;
+
+    while (indexStart < indexEnd)
+    {
+        int index = indexStart + (indexEnd - indexStart) / 2;
+        data_t el0 = getArrayKey(table, interval, index);
+        data_t el1 = getArrayKey(table, interval, index + subBlockHalfLen);
+
+        if (asc ? (el0 > el1) : (el0 < el1))
+        {
+            indexStart = index + 1;
+        }
+        else
+        {
+            indexEnd = index;
+        }
+    }
+
+    return indexStart;
+}
+
+/*
+Generates intervals in provided array until size of sub block is grater than end sub block size.
+Sub block size is the size of one block in bitonic merge step.
+*/
+template <int elementsPerThread>
+inline __device__ void generateIntervals(
+    data_t *table, int subBlockHalfSize, int subBlockSizeEnd, int stride, int activeThreadsPerBlock
+)
+{
+    extern __shared__ interval_t intervalsTile[];
+    interval_t interval;
+
+    // Only active threads have to generate intervals. This increases by 2 in every iteration. If threads were
+    // reading and writing in same array, then one additional syncthreads() would be needed in order for all
+    // active threads to read their corresponding intervals before generating new. For this purpose buffer is used
+    // as output array.
+    interval_t *intervals = intervalsTile;
+    interval_t *intervalsBuffer = intervalsTile + blockDim.x * elementsPerThread;
+
+    for (; subBlockHalfSize >= subBlockSizeEnd; subBlockHalfSize /= 2, stride *= 2, activeThreadsPerBlock *= 2)
+    {
+        for (int tx = threadIdx.x; tx < activeThreadsPerBlock; tx += blockDim.x)
+        {
+            interval = intervals[tx];
+
+            int intervalIndex = blockIdx.x * activeThreadsPerBlock + tx;
+            //bool orderAsc = sortOrder ^ ((intervalIndex / stride) & 1);
+            bool orderAsc = 1 ^ ((intervalIndex / stride) & 1);
+            int q;
+
+            // Finds q - an index, where exchanges begin in bitonic sequences being merged.
+            if (orderAsc)
+            {
+                q = binarySearchInterval(table, interval, subBlockHalfSize, true);
+            }
+            else
+            {
+                q = binarySearchInterval(table, interval, subBlockHalfSize, false);
+            }
+
+            // Output indexes of newly generated intervals
+            int index1 = 2 * tx;
+            int index2 = index1 + 1;
+
+            // L_E intervals
+            intervalsBuffer[index1].offset0 = interval.offset0;
+            intervalsBuffer[index1].length0 = q;
+            intervalsBuffer[index1].offset1 = interval.offset1 + interval.length1 - subBlockHalfSize + q;
+            intervalsBuffer[index1].length1 = subBlockHalfSize - q;
+
+            // U_E intervals. Intervals are reversed, otherwise intervals aren't generated correctly.
+            intervalsBuffer[index2].offset0 = interval.offset0 + q;
+            intervalsBuffer[index2].length0 = interval.length0 - q;
+            intervalsBuffer[index2].offset1 = interval.offset1;
+            intervalsBuffer[index2].length1 = q + interval.length1 - subBlockHalfSize;
+        }
+
+        interval_t *temp = intervals;
+        intervals = intervalsBuffer;
+        intervalsBuffer = temp;
+
+        __syncthreads();
+    }
+}
+
+/*
+Generates initial intervals and continues to evolve them until the end step.
+*/
+template <int elemsInitIntervals>
+__global__ void initIntervalsKernel(
+    data_t *table, interval_t *intervals, int tableLen, int stepStart, int stepEnd
+)
+{
+    extern __shared__ interval_t intervalsTile[];
+    int subBlockSize = 1 << stepStart;
+    int activeThreadsPerBlock = tableLen / subBlockSize / gridDim.x;
+    int elemsPerThreadBlock = blockDim.x * elemsInitIntervals;
+
+    // initialize the intervals 
+    for (int tx = threadIdx.x; tx < activeThreadsPerBlock; tx += blockDim.x)
+    {
+        // creates the L_E and U_E sequences
+        int intervalIndex = blockIdx.x * activeThreadsPerBlock + tx;
+        int offset0 = intervalIndex * subBlockSize;
+        int offset1 = intervalIndex * subBlockSize + subBlockSize / 2;
+
+        // In every odd block intervals have to be reversed, otherwise intervals aren't generated correctly.
+        intervalsTile[tx].offset0 = intervalIndex % 2 ? offset1 : offset0;
+        intervalsTile[tx].offset1 = intervalIndex % 2 ? offset0 : offset1;
+        intervalsTile[tx].length0 = subBlockSize / 2;
+        intervalsTile[tx].length1 = subBlockSize / 2;
+    }
+    __syncthreads();
+
+    // Evolves intervals in shared memory to end step
+    generateIntervals<elemsInitIntervals>(
+        table, subBlockSize / 2, 1 << stepEnd, 1, activeThreadsPerBlock
+    );
+
+    // Calculates offset in global intervals array
+    interval_t *outputIntervalsGlobal = intervals + blockIdx.x * elemsPerThreadBlock;
+    // Depending if the number of repetitions is divisible by 2, generated intervals are located in FIRST half
+    // OR in SECOND half of shared memory (shared memory has 2x size of generated intervals for buffer purposes)
+    interval_t *outputIntervalsLocal = intervalsTile + ((stepStart - stepEnd) % 2 != 0 ? elemsPerThreadBlock : 0);
+
+    // Stores generated intervals from shared to global memory
+    for (int tx = threadIdx.x; tx < elemsPerThreadBlock; tx += blockDim.x)
+    {
+        outputIntervalsGlobal[tx] = outputIntervalsLocal[tx];
+    }
+}
+
+/*
+Reads the existing intervals from global memory and evolves them until the end step.
+Note: "blockDim.x" has to be used throughout the entire kernel, because thread block size is variable
+*/
+template <int elemsGenIntervals>
+__global__ void generateIntervalsKernel(
+    data_t *table, interval_t *inputIntervals, interval_t *outputIntervals, int tableLen, int phase,
+    int stepStart, int stepEnd
+)
+{
+    extern __shared__ interval_t intervalsTile[];
+    int subBlockSize = 1 << stepStart;
+    int activeThreadsPerBlock = tableLen / subBlockSize / gridDim.x;
+    interval_t *inputIntervalsGlobal = inputIntervals + blockIdx.x * activeThreadsPerBlock;
+
+    // Active threads read existing intervals from global memory
+    for (int tx = threadIdx.x; tx < activeThreadsPerBlock; tx += blockDim.x)
+    {
+        intervalsTile[tx] = inputIntervalsGlobal[tx];
+    }
+    __syncthreads();
+
+    // Evolves intervals in shared memory to end step
+    generateIntervals<elemsGenIntervals>(
+        table, subBlockSize / 2, 1 << stepEnd, 1 << (phase - stepStart), activeThreadsPerBlock
+    );
+
+    int elemsPerThreadBlock = blockDim.x * elemsGenIntervals;
+    // Calculates offset in global intervals array
+    interval_t *outputIntervalsGlobal = outputIntervals + blockIdx.x * elemsPerThreadBlock;
+    // Depending if the number of repetitions is divisible by 2, generated intervals are located in FIRST half
+    // OR in SECOND half of shared memory (shared memory has 2x size of all generated intervals for buffer purposes)
+    interval_t *outputIntervalsLocal = intervalsTile + ((stepStart - stepEnd) % 2 != 0 ? elemsPerThreadBlock : 0);
+
+    // Stores generated intervals from shared to global memory
+    for (int tx = threadIdx.x; tx < elemsPerThreadBlock; tx += blockDim.x)
+    {
+        outputIntervalsGlobal[tx] = outputIntervalsLocal[tx];
+    }
+}
+
+/*
+Global bitonic merge for sections, where stride IS GREATER OR EQUAL than max shared memory size.
+Executes regular bitonic merge. Reads data from provided intervals.
+*/
+template <int threadsMerge, int elemsMerge>
+__global__ void bitonicMergeIntervalsKernel(data_t *keys, data_t *keysBuffer, interval_t *intervals, int phase)
+{
+    extern __shared__ data_t mergeTile[];
+    interval_t interval = intervals[blockIdx.x];
+
+    // Elements inside same sub-block have to be ordered in same direction
+    int elemsPerThreadBlock = threadsMerge * elemsMerge;
+    int offset = blockIdx.x * elemsPerThreadBlock;
+    bool orderAsc = 1 ^ ((offset >> phase) & 1);
+
+    // Loads data from global to shared memory
+    for (int tx = threadIdx.x; tx < elemsPerThreadBlock; tx += threadsMerge)
+    {
+        mergeTile[tx] = getArrayKey(keys, interval, tx);
+    }
+    __syncthreads();
+
+    // Bitonic merge
+    for (int stride = elemsPerThreadBlock / 2; stride > 0; stride >>= 1)
+    {
+        for (int tx = threadIdx.x; tx < elemsPerThreadBlock / 2; tx += threadsMerge)
+        {
+            int index = 2 * tx - (tx & (stride - 1));
+
+            if (orderAsc)
+            {
+                compareExchange(&mergeTile[index], &mergeTile[index + stride], true);
+            }
+            else
+            {
+                compareExchange(&mergeTile[index], &mergeTile[index + stride], false);
+            }
+        }
+        __syncthreads();
+    }
+
+    // Stores sorted data to buffer array
+    for (int tx = threadIdx.x; tx < elemsPerThreadBlock; tx += threadsMerge)
+    {
+        keysBuffer[offset + tx] = mergeTile[tx];
+    }
+}
+
+#endif
