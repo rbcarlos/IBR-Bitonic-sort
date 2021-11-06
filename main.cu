@@ -21,7 +21,7 @@ void runBitoicSortRegularKernel(data_t *d_keys, int arrayLength)
     dim3 dimBlock(THREADS_BITONIC_SORT, 1, 1);
 
     bitonicSortRegularKernel
-        <THREADS_BITONIC_SORT, ELEMS_BITONIC_SORT>
+        <arrayLength/ELEMS_BITONIC_SORT, ELEMS_BITONIC_SORT>
         <<<dimGrid, dimBlock, sharedMemSize>>>(
         d_keys, arrayLength
     );
@@ -116,7 +116,7 @@ void bitonicSortAdaptiveParallel(
     phasesInitIntervals = log2((double)THREADS_INIT_INTERVALS * ELEMS_INIT_INTERVALS); // 8
     phasesGenerateIntervals = log2((double)THREADS_GEN_INTERVALS * ELEMS_GEN_INTERVALS); // 9 
 
-    int phasesAll = log2((double)arrayLenPower2)+1;
+    int phasesAll = log2((double)arrayLenPower2);
     int phasesBitonicSort = log2((double)min(arrayLenPower2, elemsPerBlockBitonicSort)); // 10 if arrlen > 512
 
     if (phasesBitonicMerge < phasesBitonicSort)
