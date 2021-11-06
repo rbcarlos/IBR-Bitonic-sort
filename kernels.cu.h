@@ -144,7 +144,7 @@ inline __device__ void generateIntervals(
 
             int intervalIndex = blockIdx.x * activeThreadsPerBlock + tx;
             //bool orderAsc = sortOrder ^ ((intervalIndex / stride) & 1);
-            bool orderAsc = 1 ^ ((intervalIndex / stride) & 1);
+            bool orderAsc = 0 ^ ((intervalIndex / stride) & 1);
             int q;
 
             // Finds q - an index, where exchanges begin in bitonic sequences being merged.
