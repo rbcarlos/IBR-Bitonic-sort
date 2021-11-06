@@ -40,7 +40,7 @@ void runInitIntervalsKernel(
     int threadBlockSize = min((intervalsLen - 1) / ELEMS_INIT_INTERVALS + 1, THREADS_INIT_INTERVALS);
     int numThreadBlocks = (intervalsLen - 1) / (ELEMS_INIT_INTERVALS * threadBlockSize) + 1;
     // "2 *" because of BUFFER MEMORY for intervals
-    int sharedMemSize = 2 * elemsIntervals * threadBlockSize * sizeof(interval_t);
+    int sharedMemSize = 2 * ELEMS_INIT_INTERVALS * threadBlockSize * sizeof(interval_t);
 
     dim3 dimGrid(numThreadBlocks, 1, 1);
     dim3 dimBlock(threadBlockSize, 1, 1);
@@ -63,7 +63,7 @@ void runGenerateIntervalsKernel(
     int threadBlockSize = min((intervalsLen - 1) / ELEMS_GEN_INTERVALS + 1, THREADS_GEN_INTERVALS);
     int numThreadBlocks = (intervalsLen - 1) / (ELEMS_GEN_INTERVALS * threadBlockSize) + 1;
     // "2 *" because of BUFFER MEMORY for intervals
-    int sharedMemSize = 2 * elemsIntervals * threadBlockSize * sizeof(interval_t);
+    int sharedMemSize = 2 * ELEMS_GEN_INTERVALS * threadBlockSize * sizeof(interval_t);
 
     dim3 dimGrid(numThreadBlocks, 1, 1);
     dim3 dimBlock(threadBlockSize, 1, 1);
@@ -85,16 +85,16 @@ void runBitoicMergeIntervalsKernel(
     // necessary for entire padded table to be merged. It is only necessary that table is merged to the next
     // multiple of phase stride.
     //int arrayLenRoundedUp = roundUp(arrayLength, 1 << phase);
-    arrayLenRoundedUp = arrayLength;
+    int arrayLenRoundedUp = arrayLength;
     int elemsPerThreadBlock, sharedMemSize;
 
-    elemsPerThreadBlock = THREAD_LOCAL_MERGE * ELEMS_LOCAL_MERGE;
+    elemsPerThreadBlock = THREADS_LOCAL_MERGE * ELEMS_LOCAL_MERGE;
     sharedMemSize = elemsPerThreadBlock * sizeof(*d_keys);
 
     dim3 dimGrid(arrayLenRoundedUp / elemsPerThreadBlock, 1, 1);
-    dim3 dimBlock(THREAD_LOCAL_MERGE, 1, 1);
+    dim3 dimBlock(THREADS_LOCAL_MERGE, 1, 1);
 
-    bitonicMergeIntervalsKernel<THREAD_LOCAL_MERGE, ELEMS_LOCAL_MERGE>
+    bitonicMergeIntervalsKernel<THREADS_LOCAL_MERGE, ELEMS_LOCAL_MERGE>
         <<<dimGrid, dimBlock, sharedMemSize>>>(
         d_keys, d_keysBuffer, intervals, phase
     );
@@ -111,7 +111,7 @@ void bitonicSortAdaptiveParallel(
     int elemsPerBlockBitonicSort, phasesBitonicMerge, phasesInitIntervals, phasesGenerateIntervals;
 
     elemsPerBlockBitonicSort = THREADS_BITONIC_SORT * ELEMS_BITONIC_SORT; // 512
-    phasesBitonicMerge = log2((double)(THREAD_LOCAL_MERGE * ELEMS_LOCAL_MERGE)); // 9
+    phasesBitonicMerge = log2((double)(THREADS_LOCAL_MERGE * ELEMS_LOCAL_MERGE)); // 9
     phasesInitIntervals = log2((double)THREADS_INIT_INTERVALS * ELEMS_INIT_INTERVALS); // 8
     phasesGenerateIntervals = log2((double)THREADS_GEN_INTERVALS * ELEMS_GEN_INTERVALS); // 9 
 
@@ -200,7 +200,7 @@ main() {
 
     printf("Random keys:\n");
     for(int i = 0; i<size_keys; i++ ){
-        printf("%d: %d, ", h_keys[i], h_values[i]);
+        printf("%d, ", h_keys[i]);
     }
     printf("\n");
 
@@ -210,13 +210,16 @@ main() {
     cudaMemcpy(d_keys, h_keys, mem_size_keys, cudaMemcpyHostToDevice);
 
     int phasesAll = log2((double)size_keys);
-    int phasesBitonicMerge = log2((double)2 * THREAD_LOCAL_MERGE);
+    int phasesBitonicMerge = log2((double)2 * THREADS_LOCAL_MERGE);
     int intervalsLen = 1 << (phasesAll - phasesBitonicMerge);
 
     // Allocates buffer for keys
+    data_t* d_keysBuffer;
     cudaMalloc((void **)&d_keysBuffer, size_keys * sizeof(*d_keysBuffer));
 
     // Memory needed for storing intervals
+    interval_t* d_intervals;
+    interval_t* d_intervalsBuffer;
     cudaMalloc((void **)&d_intervals, intervalsLen * sizeof(*d_intervals));
     cudaMalloc((void **)&d_intervalsBuffer, intervalsLen * sizeof(*d_intervalsBuffer));
 
@@ -238,7 +241,7 @@ main() {
     
     printf("Sorted keys:\n");
     for(int i = 0; i<size_keys; i++ ){
-        printf("%d: %d, ", h_keys[i], h_values[i]);
+        printf("%d, ", h_keys[i]);
     }
     printf("\n");
 

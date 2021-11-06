@@ -26,7 +26,7 @@ __global__ void bitonicSortRegularKernel(data_t *dataTable, int tableLen)
     extern __shared__ data_t sortTile[];
 
     //calculate the offset and length of a block of data processed by the current block
-    int elemsPerThreadBlock = threadsBitonicSort * elemsBitonicSort
+    int elemsPerThreadBlock = threadsBitonicSort * elemsBitonicSort;
     int offset = blockIdx.x * elemsPerThreadBlock;
     int dataBlockLength =  offset + elemsPerThreadBlock <= tableLen ? elemsPerThreadBlock : tableLen - offset;
 
