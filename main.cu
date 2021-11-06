@@ -138,24 +138,26 @@ void bitonicSortAdaptiveParallel(
         int stepStart = phase;
         int stepEnd = max((double)phasesBitonicMerge, (double)phase - phasesInitIntervals);
 
-        // BS_2_IBR step 
-        runInitIntervalsKernel(
-            d_keys, d_intervals, arrayLenPower2, phasesAll, stepStart, stepEnd
-        );
-
-        // IBR_stages
-        // After initial intervals were generated intervals have to be evolved to the end step
-        while (stepEnd > phasesBitonicMerge)
-        {
-            interval_t *tempIntervals = d_intervals;
-            d_intervals = d_intervalsBuffer;
-            d_intervalsBuffer = tempIntervals;
-
-            stepStart = stepEnd;
-            stepEnd = max((double)phasesBitonicMerge, (double)stepStart - phasesGenerateIntervals);
-            runGenerateIntervalsKernel(
-                d_keys, d_intervalsBuffer, d_intervals, arrayLenPower2, phasesAll, phase, stepStart, stepEnd
+        if (phase > phasesBitonicMerge) {
+            // BS_2_IBR step 
+            runInitIntervalsKernel(
+                d_keys, d_intervals, arrayLenPower2, phasesAll, stepStart, stepEnd
             );
+
+            // IBR_stages
+            // After initial intervals were generated intervals have to be evolved to the end step
+            while (stepEnd > phasesBitonicMerge)
+            {
+                interval_t *tempIntervals = d_intervals;
+                d_intervals = d_intervalsBuffer;
+                d_intervalsBuffer = tempIntervals;
+
+                stepStart = stepEnd;
+                stepEnd = max((double)phasesBitonicMerge, (double)stepStart - phasesGenerateIntervals);
+                runGenerateIntervalsKernel(
+                    d_keys, d_intervalsBuffer, d_intervals, arrayLenPower2, phasesAll, phase, stepStart, stepEnd
+                );
+            }
         }
 
         // BS_lastSteps
