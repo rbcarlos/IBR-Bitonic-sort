@@ -21,7 +21,7 @@ void runBitoicSortRegularKernel(data_t *d_keys, int arrayLength)
     dim3 dimBlock(THREADS_BITONIC_SORT, 1, 1);
 
     bitonicSortRegularKernel
-        <arrayLength/ELEMS_BITONIC_SORT, ELEMS_BITONIC_SORT>
+        <THREADS_BITONIC_SORT, ELEMS_BITONIC_SORT>
         <<<dimGrid, dimBlock, sharedMemSize>>>(
         d_keys, arrayLength
     );
@@ -150,7 +150,7 @@ void bitonicSortAdaptiveParallel(
 
             // IBR_stages
             // After initial intervals were generated intervals have to be evolved to the end step
-            while (stepEnd > phasesBitonicMerge)
+            while (stepEnd >= phasesBitonicMerge)
             {
                 interval_t *tempIntervals = d_intervals;
                 d_intervals = d_intervalsBuffer;
