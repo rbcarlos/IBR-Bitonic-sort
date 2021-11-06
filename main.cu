@@ -255,12 +255,12 @@ int main() {
     */
 
     for(int i = 0; i<size_keys-1; i++) {
-        if(h_keys[i] < h_keys[i+1]) {
-            printf("INVALID");
+        if(h_keys[i] > h_keys[i+1]) {
+            printf("INVALID!\n");
             return 1;
         }
     }
-    printf("VALID");
+    printf("VALID!\n");
     return 0;
 
 }
