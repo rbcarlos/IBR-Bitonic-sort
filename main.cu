@@ -142,8 +142,7 @@ void bitonicSortAdaptiveParallel(
         printf("stepStart: %d, ", stepStart);
         printf("stepEnd: %d\n", stepEnd);
 
-        if (phase >= phasesBitonicMerge) {
-            printf("here\n");
+        if (phase > phasesBitonicMerge) {
             // BS_2_IBR step 
             runInitIntervalsKernel(
                 d_keys, d_intervals, arrayLenPower2, phasesAll, stepStart, stepEnd
