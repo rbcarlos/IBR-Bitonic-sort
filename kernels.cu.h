@@ -92,11 +92,11 @@ elements after index q have to be exchanged. Bitonic sequence boundaries are pro
 
 Example: 2, 3, 5, 7 | 8, 7, 3, 1 --> index q = 2 ; (5, 7 and 3, 1 have to be exchanged).
 */
-inline __device__ int_t binarySearchInterval(data_t* table, interval_t interval, int subBlockHalfLen, bool asc)
+inline __device__ int binarySearchInterval(data_t* table, interval_t interval, int subBlockHalfLen, bool asc)
 {
     // Depending which interval is longer, different start and end indexes are used
-    int_t indexStart = interval.length0 <= interval.length1 ? 0 : subBlockHalfLen - interval.length1;
-    int_t indexEnd = interval.length0 <= interval.length1 ? interval.length0 : subBlockHalfLen;
+    int indexStart = interval.length0 <= interval.length1 ? 0 : subBlockHalfLen - interval.length1;
+    int indexEnd = interval.length0 <= interval.length1 ? interval.length0 : subBlockHalfLen;
 
     while (indexStart < indexEnd)
     {
