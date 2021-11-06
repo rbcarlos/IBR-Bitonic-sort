@@ -117,7 +117,7 @@ void bitonicSortAdaptiveParallel(
     phasesGenerateIntervals = log2((double)THREADS_GEN_INTERVALS * ELEMS_GEN_INTERVALS); // 9 
 
     int phasesAll = log2((double)arrayLenPower2);
-    int phasesBitonicSort = log2((double)min(arrayLenPower2, elemsPerBlockBitonicSort)); // 9 if arrlen > 512
+    int phasesBitonicSort = log2((double)min(arrayLenPower2, elemsPerBlockBitonicSort)); // 10 if arrlen > 512
 
     if (phasesBitonicMerge < phasesBitonicSort)
     {
@@ -134,7 +134,7 @@ void bitonicSortAdaptiveParallel(
     // note that this does only phasesBitonicSort (log(512) = 9) phases 
     runBitoicSortRegularKernel(d_keys, arrayLength);
     
-    for (int phase = phasesBitonicSort; phase <= phasesAll; phase++)
+    for (int phase = phasesBitonicSort + 1; phase <= phasesAll; phase++)
     {
         int stepStart = phase;
         int stepEnd = max((double)phasesBitonicMerge, (double)phase - phasesInitIntervals);
