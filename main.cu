@@ -133,11 +133,13 @@ void bitonicSortAdaptiveParallel(
     // BS_firstStages
     // note that this does only phasesBitonicSort (log(512) = 9) phases 
     runBitoicSortRegularKernel(d_keys, arrayLength);
-    /*
+    
     for (int phase = phasesBitonicSort; phase <= phasesAll; phase++)
     {
         int stepStart = phase;
         int stepEnd = max((double)phasesBitonicMerge, (double)phase - phasesInitIntervals);
+        printf("stepStart: %d", stepStart);
+        printf("stepEnd: %d", stepEnd);
 
         if (phase > phasesBitonicMerge) {
             // BS_2_IBR step 
@@ -173,7 +175,7 @@ void bitonicSortAdaptiveParallel(
         d_keysBuffer = tempTable;
         
     }
-    */
+    
 }
 
 void randomInit(data_t* data, int size) {
