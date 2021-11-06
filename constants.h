@@ -23,7 +23,7 @@ struct Interval
 
 
 // How many threads are used per on thread block for bitonic merge. Has to be power of 2.
-#define THREADS_LOCAL_MERGE 256
+#define THREADS_LOCAL_MERGE 512
 // How many elements are processed by one thread in bitonic merge kernel. Min value is 2.
 // Has to be divisible by 2.
 #define ELEMS_LOCAL_MERGE 4
