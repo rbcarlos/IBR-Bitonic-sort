@@ -111,13 +111,13 @@ void bitonicSortAdaptiveParallel(
     int elemsPerBlockBitonicSort, phasesBitonicMerge, phasesInitIntervals, phasesGenerateIntervals;
 
     elemsPerBlockBitonicSort = THREADS_BITONIC_SORT * ELEMS_BITONIC_SORT; // 512
-    phasesBitonicMerge = log2((double)(THREADS_LOCAL_MERGE * ELEMS_LOCAL_MERGE)); // 9
+    phasesBitonicMerge = log2((double)(THREADS_LOCAL_MERGE * ELEMS_LOCAL_MERGE)); // 10
     //phasesBitonicMerge = log2((double) arrayLength);
     phasesInitIntervals = log2((double)THREADS_INIT_INTERVALS * ELEMS_INIT_INTERVALS); // 8
     phasesGenerateIntervals = log2((double)THREADS_GEN_INTERVALS * ELEMS_GEN_INTERVALS); // 9 
 
     int phasesAll = log2((double)arrayLenPower2);
-    int phasesBitonicSort = log2((double)min(arrayLenPower2, elemsPerBlockBitonicSort)); // 10 if arrlen > 512
+    int phasesBitonicSort = log2((double)min(arrayLenPower2, elemsPerBlockBitonicSort)); // 10 if arrlen > 1024
 
     if (phasesBitonicMerge < phasesBitonicSort)
     {
@@ -150,7 +150,7 @@ void bitonicSortAdaptiveParallel(
 
             // IBR_stages
             // After initial intervals were generated intervals have to be evolved to the end step
-            while (stepEnd >= phasesBitonicMerge)
+            while (stepEnd > phasesBitonicMerge)
             {
                 interval_t *tempIntervals = d_intervals;
                 d_intervals = d_intervalsBuffer;
