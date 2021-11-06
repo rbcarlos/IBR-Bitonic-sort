@@ -3,8 +3,8 @@
 
 typedef struct Interval interval_t;
 typedef int data_t;
-#define N_ELEMENTS 512
-#define GPU_RUNS 100
+#define N_ELEMENTS 2048
+#define GPU_RUNS 1
 
 struct Interval
 {
