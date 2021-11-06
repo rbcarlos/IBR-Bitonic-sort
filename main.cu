@@ -133,7 +133,7 @@ void bitonicSortAdaptiveParallel(
     // BS_firstStages
     // note that this does only phasesBitonicSort (log(512) = 9) phases 
     runBitoicSortRegularKernel(d_keys, arrayLength);
-    
+    /*
     for (int phase = phasesBitonicSort; phase <= phasesAll; phase++)
     {
         int stepStart = phase;
@@ -173,7 +173,7 @@ void bitonicSortAdaptiveParallel(
         d_keysBuffer = tempTable;
         
     }
-    
+    */
 }
 
 void randomInit(data_t* data, int size) {
