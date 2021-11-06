@@ -138,9 +138,9 @@ void bitonicSortAdaptiveParallel(
     {
         int stepStart = phase;
         int stepEnd = max((double)phasesBitonicMerge, (double)phase - phasesInitIntervals);
-        printf("phase: %d, ", phase);
-        printf("stepStart: %d, ", stepStart);
-        printf("stepEnd: %d\n", stepEnd);
+        //printf("phase: %d, ", phase);
+        //printf("stepStart: %d, ", stepStart);
+        //printf("stepEnd: %d\n", stepEnd);
 
         if (phase > phasesBitonicMerge) {
             // BS_2_IBR step 
@@ -205,13 +205,13 @@ main() {
     data_t* h_keys = (data_t*) malloc(mem_size_keys); 
 
     randomInit(h_keys, size_keys);
-
+    /*
     printf("Random keys:\n");
     for(int i = 0; i<size_keys; i++ ){
         printf("%d, ", h_keys[i]);
     }
     printf("\n");
-
+    */
     data_t* d_keys;
     cudaMalloc((void**) &d_keys, mem_size_keys);
 
@@ -246,11 +246,20 @@ main() {
 
     printf("Bitonic search on %d elements runs in: %lu microsecs\n", size_keys, elapsed);
 
-    
+    /*
     printf("Sorted keys:\n");
     for(int i = 0; i<size_keys; i++ ){
         printf("%d, ", h_keys[i]);
     }
     printf("\n");
+    */
+
+    for(int i = 0; i<size_keys-1; i++) {
+        if(h[i] < h[i+1]) {
+            printf("INVALID");
+            return;
+        }
+    }
+    printf("VALID");
 
 }
