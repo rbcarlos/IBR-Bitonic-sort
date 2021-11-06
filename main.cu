@@ -111,8 +111,8 @@ void bitonicSortAdaptiveParallel(
     int elemsPerBlockBitonicSort, phasesBitonicMerge, phasesInitIntervals, phasesGenerateIntervals;
 
     elemsPerBlockBitonicSort = THREADS_BITONIC_SORT * ELEMS_BITONIC_SORT; // 512
-    //phasesBitonicMerge = log2((double)(THREADS_LOCAL_MERGE * ELEMS_LOCAL_MERGE)); // 9
-    phasesBitonicMerge = log2((double) arrayLength);
+    phasesBitonicMerge = log2((double)(THREADS_LOCAL_MERGE * ELEMS_LOCAL_MERGE)); // 9
+    //phasesBitonicMerge = log2((double) arrayLength);
     phasesInitIntervals = log2((double)THREADS_INIT_INTERVALS * ELEMS_INIT_INTERVALS); // 8
     phasesGenerateIntervals = log2((double)THREADS_GEN_INTERVALS * ELEMS_GEN_INTERVALS); // 9 
 
