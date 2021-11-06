@@ -255,7 +255,7 @@ int main() {
     */
 
     for(int i = 0; i<size_keys-1; i++) {
-        if(h[i] < h[i+1]) {
+        if(h_keys[i] < h_keys[i+1]) {
             printf("INVALID");
             return 1;
         }
