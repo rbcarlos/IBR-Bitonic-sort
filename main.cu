@@ -10,7 +10,7 @@
 /*
 Sorts sub-blocks of input data with REGULAR bitonic sort
 */
-void BS_firstStages(data_t *d_keys, int arrayLength)
+void runBitoicSortRegularKernel(data_t *d_keys, int arrayLength)
 {
     int elemsPerThreadBlock, sharedMemSize;
 
@@ -107,22 +107,36 @@ void IBR_binotic_sort(
     data_t *&d_keys, data_t *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
 )
 {
+    int elemsPerBlockBitonicSort, phasesBitonicMerge, phasesInitIntervals, phasesGenerateIntervals;
 
-    int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD; // 1024
-    int phasesInMemory = log2((double)(N_THREADS * ELEMS_PER_THREAD)); // 10
-    int phasesBitonicMerge = log2((double) arrayLength);
+    elemsPerBlockBitonicSort = N_THREADS * ELEMS_PER_THREAD; // 512
+    phasesBitonicMerge = log2((double)(N_THREADS * ELEMS_PER_THREAD)); // 10
+    //phasesBitonicMerge = log2((double) arrayLength);
+    phasesInitIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 8
+    phasesGenerateIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 9 
 
     int phasesAll = log2((double)arrayLength);
-    int phasesBitonicSort = log2((double)min(arrayLength, elemsPerBlock)); // 10 if arrlen > 1024
+    int phasesBitonicSort = log2((double)min(arrayLength, elemsPerBlockBitonicSort)); // 10 if arrlen > 1024
 
-    // note that this does only phasesBitonicSort (log(1024) = 10) phases, if arrlen <= 1024, only regular bitonic sort is performed
-    BS_firstStages(d_keys, arrayLength);
+    if (phasesBitonicMerge < phasesBitonicSort)
+    {
+        printf(
+            "\nNumber of phases executed in bitonic merge has to be lower than number of phases "
+            "executed in initial bitonic sort. This is due to the fact, that regular bitonic sort is "
+            "used (not normalized). This way the sort direction for entire thread block can be computed "
+            "when executing bitonic merge, which is much more efficient.\n"
+        );
+        exit(EXIT_FAILURE);
+    }
+
+    // BS_firstStages
+    // note that this does only phasesBitonicSort (log(512) = 9) phases 
+    runBitoicSortRegularKernel(d_keys, arrayLength);
     
-    // pick up where BS_firstStages left off
     for (int phase = phasesBitonicSort + 1; phase <= phasesAll; phase++)
     {
         int stepStart = phase;
-        int stepEnd = max((double)phasesBitonicMerge, (double)stepStart - phasesInMemory);
+        int stepEnd = max((double)phasesBitonicMerge, (double)phase - phasesInitIntervals);
         //printf("phase: %d, ", phase);
         //printf("stepStart: %d, ", stepStart);
         //printf("stepEnd: %d\n", stepEnd);
@@ -141,7 +155,7 @@ void IBR_binotic_sort(
             d_intervalsBuffer = tempIntervals;
 
             stepStart = stepEnd;
-            stepEnd = max((double)phasesBitonicMerge, (double)stepStart - phasesInMemory);
+            stepEnd = max((double)phasesBitonicMerge, (double)stepStart - phasesGenerateIntervals);
             runGenerateIntervalsKernel(
                 d_keys, d_intervalsBuffer, d_intervals, arrayLength, phasesAll, phase, stepStart, stepEnd
             );
