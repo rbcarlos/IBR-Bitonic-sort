@@ -21,7 +21,7 @@ inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
 Sorts sub-blocks of input data with REGULAR bitonic sort (not NORMALIZED bitonic sort).
 */
 template <int threadsBitonicSort, int elemsBitonicSort>
-__global__ void bitonicSortRegularKernel(data_t *dataTable, int tableLen)
+__global__ void BS_firstStagesKernel(data_t *dataTable, int tableLen)
 {
     extern __shared__ data_t sortTile[];
 

@@ -25,14 +25,13 @@ void IBR_binotic_sort(
     //=========================================================================================
 
     // note that this does only stagesBitonicSort (log(1024) = 10) stages 
-    // if arrlen <= 1024, only regular bitonic sort is used
-    //BS_firstStages(d_keys, arrayLength);
+    // if arrlen <= 1024, only regular bitonic sort (BS_firstStages) is used
     sharedMemSize = elemsPerBlock * sizeof(*d_keys);
 
     numBlocks = arrayLength / elemsPerBlock;
     numThreads = N_THREADS;
 
-    bitonicSortRegularKernel
+    BS_firstStagesKernel
         <N_THREADS, ELEMS_PER_THREAD>
         <<<numBlocks, numThreads, sharedMemSize>>>(
         d_keys, arrayLength
@@ -63,8 +62,7 @@ void IBR_binotic_sort(
             d_keys, d_intervals, arrayLength, stepStart, stepEnd
         );
 
-        // IBR_stages
-        // picks up where the previous call left off if it did not fully fit in memory
+        // picks up where the previous call left off if it did not fully fit in  shared memory
         // with 1024 elements per block, this step is only going to be called after 20 stages
         while (stepEnd > stagesInMemory)
         {
@@ -94,6 +92,9 @@ void IBR_binotic_sort(
         //=========================================================================================
         //========================================IBR_2_BS=========================================
         //=========================================================================================
+
+        // uses the intervals to merge the blocks for that phase
+        // uses regular bitonic merge
 
         sharedMemSize = elemsPerBlock * sizeof(*d_keys);
 
