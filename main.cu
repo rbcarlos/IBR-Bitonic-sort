@@ -110,9 +110,8 @@ void IBR_binotic_sort(
     int elemsPerBlockBitonicSort, phasesBitonicMerge, phasesInitIntervals, phasesGenerateIntervals;
 
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD; //1024
-    elemsPerBlockBitonicSort = N_THREADS * ELEMS_PER_THREAD; // 512
+    int phasesInMemory = log2((double)(elemsPerBlock));
     phasesBitonicMerge = log2((double)(N_THREADS * ELEMS_PER_THREAD)); // 10
-    //phasesBitonicMerge = log2((double) arrayLength);
     phasesInitIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 8
     phasesGenerateIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 9 
 
@@ -126,7 +125,7 @@ void IBR_binotic_sort(
     for (int phase = phasesBitonicSort + 1; phase <= phasesAll; phase++)
     {
         int stepStart = phase;
-        int stepEnd = max((double)phasesBitonicMerge, (double)phase - phasesInitIntervals);
+        int stepEnd = max((double)phasesInMemory, (double)phase - phasesInMemory);
         //printf("phase: %d, ", phase);
         //printf("stepStart: %d, ", stepStart);
         //printf("stepEnd: %d\n", stepEnd);
@@ -138,14 +137,14 @@ void IBR_binotic_sort(
 
         // IBR_stages
         // After initial intervals were generated intervals have to be evolved to the end step
-        while (stepEnd > phasesBitonicMerge)
+        while (stepEnd > phasesInMemory)
         {
             interval_t *tempIntervals = d_intervals;
             d_intervals = d_intervalsBuffer;
             d_intervalsBuffer = tempIntervals;
 
             stepStart = stepEnd;
-            stepEnd = max((double)phasesBitonicMerge, (double)stepStart - phasesGenerateIntervals);
+            stepEnd = max((double)phasesInMemory, (double)stepStart - phasesInMemory);
             runGenerateIntervalsKernel(
                 d_keys, d_intervalsBuffer, d_intervals, arrayLength, phasesAll, phase, stepStart, stepEnd
             );
