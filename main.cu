@@ -107,16 +107,11 @@ void IBR_binotic_sort(
     data_t *&d_keys, data_t *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
 )
 {
-    int elemsPerBlockBitonicSort, phasesBitonicMerge, phasesInitIntervals, phasesGenerateIntervals;
 
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD; //1024
     int phasesInMemory = log2((double)(elemsPerBlock));
-    phasesBitonicMerge = log2((double)(N_THREADS * ELEMS_PER_THREAD)); // 10
-    phasesInitIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 8
-    phasesGenerateIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 9 
-
     int phasesAll = log2((double)arrayLength);
-    int phasesBitonicSort = log2((double)min(arrayLength, elemsPerBlock)); // 10 if arrlen > 1024
+    int phasesBitonicSort = min(phasesAll, phasesInMemory); // 10 if arrlen > 1024
 
     // BS_firstStages
     // note that this does only phasesBitonicSort (log(512) = 9) phases 
