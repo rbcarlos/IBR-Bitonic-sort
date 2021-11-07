@@ -31,11 +31,7 @@ void IBR_binotic_sort(
     numBlocks = arrayLength / elemsPerBlock;
     numThreads = N_THREADS;
 
-    BS_firstStagesKernel
-        <N_THREADS, ELEMS_PER_THREAD>
-        <<<numBlocks, numThreads, sharedMemSize>>>(
-        d_keys, arrayLength
-    );
+    BS_firstStagesKernel<<<numBlocks, numThreads, sharedMemSize>>>(d_keys, arrayLength);
 
     //=========================================================================================
     //=========================================================================================

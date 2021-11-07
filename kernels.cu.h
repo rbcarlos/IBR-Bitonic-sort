@@ -20,7 +20,6 @@ inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
 /*
 Sorts the elements using a regular bitonic sort until the subblocks are too large to be processed in shared memory
 */
-template <int threadsBitonicSort, int elemsBitonicSort>
 __global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
 {
     // dynamically allocate the shared memory
@@ -30,23 +29,21 @@ __global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD;
     int offset = blockIdx.x * elemsPerBlock;
 
-    // If shared memory size is lower than table length, than adjacent blocks have to be ordered in opposite
-    // direction in order to create bitonic sequences.
+    // if this is not the only kernel to be spawned, the blocks have to have an alternating direction 
     bool blockDirection = 1 ^ (blockIdx.x & 1);
 
-    // Loads data into shared memory with coallesced access
+    // Loads data into shared memory with coallesced access, each thread loading ELEMS_PER_THREAD elements.
     for (int tx = threadIdx.x; tx < elemsPerBlock; tx += N_THREADS)
     {
         sortTile[tx] = keys[offset + tx];
     }
+    __syncthreads();
 
-    // Bitonic sort
+    
     for (int subBlockSize = 1; subBlockSize < elemsPerBlock; subBlockSize <<= 1)
     {
-        //stride or step
         for (int stride = subBlockSize; stride > 0; stride >>= 1)
         {
-            __syncthreads();
             for (int tx = threadIdx.x; tx < elemsPerBlock >> 1; tx += N_THREADS)
             {
                 bool direction = blockDirection ^ ((tx & subBlockSize) != 0);
@@ -61,11 +58,11 @@ __global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
                     compareExchange(&sortTile[index], &sortTile[index + stride], false);
                 }
             }
+            __syncthreads();
         }
     }
 
     // Stores sorted elements from shared to global memory
-    __syncthreads();
     for (int tx = threadIdx.x; tx < elemsPerBlock; tx += N_THREADS)
     {
         keys[offset + tx] = sortTile[tx];
