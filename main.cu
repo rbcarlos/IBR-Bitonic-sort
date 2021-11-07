@@ -136,24 +136,20 @@ void IBR_binotic_sort(
         int stepStart = stage;
         int stepEnd = max((double)stagesInMemory, (double)stepStart - stagesInMemory);
 
-        /*
-        IBR_stages(
-            d_keys, d_intervals, arrayLength, stagesAll, stepStart, stepEnd
-        );
-        */
         int intervalsLen = 1 << (stagesAll - stepEnd);
 
-        int numThreadsIBR = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
-        int numBlocksIBR = (intervalsLen - 1) / (ELEMS_PER_THREAD * numThreadsIBR) + 1;
+        numThreads = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
+        numBlocks = (intervalsLen - 1) / (ELEMS_PER_THREAD * numThreads) + 1;
         // "2 *" because of BUFFER MEMORY for intervals
-        sharedMemSize = 2 * ELEMS_PER_THREAD * numThreadsIBR * sizeof(interval_t);
+        sharedMemSize = 2 * ELEMS_PER_THREAD * numThreads * sizeof(interval_t);
 
-        initIntervalsKernel<ELEMS_PER_THREAD><<<numBlocksIBR, numThreadsIBR, sharedMemSize>>>(
+        initIntervalsKernel<ELEMS_PER_THREAD><<<numBlocks, numThreads, sharedMemSize>>>(
             d_keys, d_intervals, arrayLength, stepStart, stepEnd
         );
 
         // IBR_stages
         // picks up where the previous call left off if it did not fully fit in memory
+        // with 1024 elements per block, this step is only going to be called after 20 stages
         while (stepEnd > stagesInMemory)
         {
             interval_t *tempIntervals = d_intervals;
@@ -162,8 +158,21 @@ void IBR_binotic_sort(
 
             stepStart = stepEnd;
             stepEnd = max((double)stagesInMemory, (double)stepStart - stagesInMemory);
+            /*
             runGenerateIntervalsKernel(
                 d_keys, d_intervalsBuffer, d_intervals, arrayLength, stagesAll, stage, stepStart, stepEnd
+            );
+            */
+
+            intervalsLen = 1 << (stagesAll - stepEnd);
+
+            numThreads = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
+            numBlocks = (intervalsLen - 1) / (ELEMS_PER_THREAD * numThreads) + 1;
+            // "2 *" because of BUFFER MEMORY for intervals
+            sharedMemSize = 2 * ELEMS_PER_THREAD * numThreads * sizeof(interval_t);
+        
+            generateIntervalsKernel<ELEMS_PER_THREAD><<<numBlocks, numThreads, sharedMemSize>>>(
+                d_keys, inputIntervals, outputIntervals, arrayLength, stage, stepStart, stepEnd
             );
         }
         //===================================================
