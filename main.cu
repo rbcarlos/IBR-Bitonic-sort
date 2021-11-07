@@ -55,9 +55,7 @@ void IBR_binotic_sort(
         sharedMemSize = 2 * ELEMS_PER_THREAD * numThreads * sizeof(interval_t);
 
         // BS_2_IBR + IBR_stages
-        IBRKernel<<<numBlocks, numThreads, sharedMemSize>>>(
-            d_keys, d_intervals, arrayLength, stepStart, stepEnd
-        );
+        IBRKernel<<<numBlocks, numThreads, sharedMemSize>>>(d_keys, d_intervals, arrayLength, stepStart, stepEnd);
 
         // picks up where the previous call left off if it did not fully fit in  shared memory
         // with 1024 elements per block, this step is only going to be called after 20 stages
@@ -78,9 +76,7 @@ void IBR_binotic_sort(
             sharedMemSize = 2 * ELEMS_PER_THREAD * numThreads * sizeof(interval_t);
         
             // only IBR_stages
-            IBRContKernel<<<numBlocks, numThreads, sharedMemSize>>>(
-                d_keys, d_intervalsBuffer, d_intervals, arrayLength, stage, stepStart, stepEnd
-            );
+            IBRContKernel<<<numBlocks, numThreads, sharedMemSize>>>(d_keys, d_intervalsBuffer, d_intervals, arrayLength, stage, stepStart, stepEnd);
         }
 
         //=========================================================================================
@@ -99,10 +95,7 @@ void IBR_binotic_sort(
         numBlocks = arrayLength/ elemsPerBlock;
         numThreads = N_THREADS;
 
-        IBR_2_BSKernel<N_THREADS, ELEMS_PER_THREAD>
-            <<<numBlocks, numThreads, sharedMemSize>>>(
-            d_keys, d_keysBuffer, d_intervals, stage
-        );
+        IBR_2_BSKernel<<<numBlocks, numThreads, sharedMemSize>>>(d_keys, d_keysBuffer, d_intervals, stage);
 
         //=========================================================================================
         //=========================================================================================
