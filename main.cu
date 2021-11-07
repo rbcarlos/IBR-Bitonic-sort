@@ -158,11 +158,6 @@ void IBR_binotic_sort(
 
             stepStart = stepEnd;
             stepEnd = max((double)stagesInMemory, (double)stepStart - stagesInMemory);
-            /*
-            runGenerateIntervalsKernel(
-                d_keys, d_intervalsBuffer, d_intervals, arrayLength, stagesAll, stage, stepStart, stepEnd
-            );
-            */
 
             intervalsLen = 1 << (stagesAll - stepEnd);
 
@@ -257,7 +252,7 @@ int main() {
 
     cudaMemcpy(h_keys, d_keys, mem_size_keys, cudaMemcpyDeviceToHost);
 
-    printf("Bitonic search on %d elements runs in: %lu microsecs\n", size_keys, elapsed);
+    printf("Bitonic sort on %d elements runs in: %lu microsecs\n", size_keys, elapsed);
 
     /*
     printf("Sorted keys:\n");
