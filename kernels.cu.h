@@ -270,7 +270,7 @@ __global__ void bitonicMergeIntervalsKernel(data_t *keys, data_t *keysBuffer, in
     // Loads data from global to shared memory
     for (int tx = threadIdx.x; tx < elemsPerThreadBlock; tx += threadsMerge)
     {
-        mergeTile[tx] = getArrayKey(keys, interval, tx);
+        mergeTile[tx] = get(keys, interval, tx);
     }
     __syncthreads();
 
