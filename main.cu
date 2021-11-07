@@ -144,7 +144,7 @@ int main() {
     }
     printf("\n");
     */
-    data_t* d_keys;
+    Single<int>::ElTp* d_keys;
     cudaMalloc((void**) &d_keys, mem_size_keys);
 
     cudaMemcpy(d_keys, h_keys, mem_size_keys, cudaMemcpyHostToDevice);
