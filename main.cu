@@ -7,18 +7,36 @@
 #include "constants.h"
 #include "kernels.cu.h"
 
+typedef struct Interval interval_t;
+typedef int data_t;
+#define N_ELEMENTS 1048576
+#define GPU_RUNS 100
+
+struct Interval
+{
+    int offset0;
+    int length0;
+    int offset1;
+    int length1;
+};
+
+#define N_THREADS 256
+#define ELEMS_PER_THREAD 4
+
 /*
 Sorts sub-blocks of input data with REGULAR bitonic sort
 */
 void runBitoicSortRegularKernel(data_t *d_keys, int arrayLength)
 {
+    dim3 dimGrid(1,1,1);
+    dim3 dimBlock(1,1,1);
     int elemsPerThreadBlock, sharedMemSize;
 
     elemsPerThreadBlock = N_THREADS * ELEMS_PER_THREAD;
     sharedMemSize = elemsPerThreadBlock * sizeof(*d_keys);
 
-    dim3 dimGrid(arrayLength / elemsPerThreadBlock, 1, 1);
-    dim3 dimBlock(N_THREADS, 1, 1);
+    dimGrid(arrayLength / elemsPerThreadBlock, 1, 1);
+    dimBlock(N_THREADS, 1, 1);
 
     bitonicSortRegularKernel
         <N_THREADS, ELEMS_PER_THREAD>
@@ -103,7 +121,7 @@ void runBitoicMergeIntervalsKernel(
 /*
 Sorts data with parallel adaptive bitonic sort.
 */
-void bitonicSortAdaptiveParallel(
+void IBR_binotic_sort(
     data_t *&d_keys, data_t *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
 )
 {
@@ -232,7 +250,7 @@ int main() {
     gettimeofday(&t_start, NULL); 
 
     for(int i=0; i<GPU_RUNS; i++){
-        bitonicSortAdaptiveParallel(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
+        IBR_binotic_sort(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
     }
     cudaDeviceSynchronize();
 
