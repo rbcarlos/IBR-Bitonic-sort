@@ -106,8 +106,8 @@ Finds q which is used to generate the intervals
 inline __device__ int findQ(data_t* keys, interval_t interval, int subBlockHalfLen, bool asc)
 {
     // Depending which interval is longer, different start and end indexes are used
-    int indexStart = interval.length0 <= interval.length1 ? 0 : subBlockHalfLen - interval.length1;
-    int indexEnd = interval.length0 <= interval.length1 ? interval.length0 : subBlockHalfLen;
+    int indexStart = 0; //interval.length0 <= interval.length1 ? 0 : subBlockHalfLen - interval.length1;
+    int indexEnd = interval.length0; //interval.length0 <= interval.length1 ? interval.length0 : subBlockHalfLen;
 
     while (indexStart < indexEnd)
     {
