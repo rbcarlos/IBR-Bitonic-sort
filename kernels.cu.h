@@ -5,7 +5,7 @@
 #include "constants.h"
 
 /*
-Compares 2 elements and exchanges them according to sortOrder.
+Compares 2 elements and exchanges them according to asc.
 */
 inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
 {
@@ -18,17 +18,18 @@ inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
 }
 
 /*
-Sorts sub-blocks of input data with REGULAR bitonic sort (not NORMALIZED bitonic sort).
+Sorts the elements using a regular bitonic sort until the subblocks are too large to be processed in shared memory
 */
 template <int threadsBitonicSort, int elemsBitonicSort>
-__global__ void BS_firstStagesKernel(data_t *dataTable, int tableLen)
+__global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
 {
+    // dynamically allocate the shared memory
     extern __shared__ data_t sortTile[];
 
     //calculate the offset and length of a block of data processed by the current block
-    int elemsPerThreadBlock = threadsBitonicSort * elemsBitonicSort;
-    int offset = blockIdx.x * elemsPerThreadBlock;
-    int dataBlockLength =  offset + elemsPerThreadBlock <= tableLen ? elemsPerThreadBlock : tableLen - offset;
+    int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD;
+    int offset = blockIdx.x * elemsPerBlock;
+    int dataBlockLength =  offset + elemsPerBlock <= tableLen ? elemsPerBlock : tableLen - offset;
 
     // If shared memory size is lower than table length, than adjacent blocks have to be ordered in opposite
     // direction in order to create bitonic sequences.
@@ -37,7 +38,7 @@ __global__ void BS_firstStagesKernel(data_t *dataTable, int tableLen)
     // Loads data into shared memory with coallesced access
     for (int tx = threadIdx.x; tx < dataBlockLength; tx += threadsBitonicSort)
     {
-        sortTile[tx] = dataTable[offset + tx];
+        sortTile[tx] = keys[offset + tx];
     }
 
     // Bitonic sort
@@ -68,7 +69,7 @@ __global__ void BS_firstStagesKernel(data_t *dataTable, int tableLen)
     __syncthreads();
     for (int tx = threadIdx.x; tx < dataBlockLength; tx += threadsBitonicSort)
     {
-        dataTable[offset + tx] = sortTile[tx];
+        keys[offset + tx] = sortTile[tx];
     }
 }
 
