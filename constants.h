@@ -15,7 +15,7 @@ struct Interval
 };
 
 #define N_THREADS 128
-#define ELEMS_PER_THREAD 4
+#define ELEMS_PER_THREAD 8
 
 // How many threads are used per one thread block for bitonic sort, which is performed entirely
 // in shared memory. Has to be power of 2.
