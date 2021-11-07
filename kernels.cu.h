@@ -4,6 +4,22 @@
 
 #include "constants.h"
 
+template<class T>
+class Single {
+public:
+    typedef T ElTp;
+    static __device__ __host__ inline void compare(ElTp *elem1, ElTp *elem2, bool asc)
+    { 
+        if (asc ? (*elem1 > *elem) : (*elem1 < *elem2))
+        {
+            ElTp temp = *elem1;
+            *elem1 = *elem2;
+            *elem2 = temp;
+        }    
+    }
+    static __device__ __host__ inline void compareQ(ElTp *elem1, ElTp *elem2, bool asc, int mid, int s, int e) {}
+};
+
 /*
 Compares 2 elements and exchanges them according to asc.
 */
