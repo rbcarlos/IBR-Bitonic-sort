@@ -166,7 +166,7 @@ int main() {
     gettimeofday(&t_start, NULL); 
 
     for(int i=0; i<GPU_RUNS; i++){
-        IBR_binotic_sort<Single<int>>(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
+        IBR_binotic_sort<Single<int> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
     }
     cudaDeviceSynchronize();
 
