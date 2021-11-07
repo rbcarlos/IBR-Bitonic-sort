@@ -29,27 +29,25 @@ __global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
     //calculate the offset and length of a block of data processed by the current block
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD;
     int offset = blockIdx.x * elemsPerBlock;
-    //int dataBlockLength =  offset + elemsPerBlock <= tableLen ? elemsPerBlock : tableLen - offset;
-    int dataBlockLength = elemsPerBlock;
 
     // If shared memory size is lower than table length, than adjacent blocks have to be ordered in opposite
     // direction in order to create bitonic sequences.
     bool blockDirection = 1 ^ (blockIdx.x & 1);
 
     // Loads data into shared memory with coallesced access
-    for (int tx = threadIdx.x; tx < dataBlockLength; tx += threadsBitonicSort)
+    for (int tx = threadIdx.x; tx < elemsPerBlock; tx += threadsBitonicSort)
     {
         sortTile[tx] = keys[offset + tx];
     }
 
     // Bitonic sort
-    for (int subBlockSize = 1; subBlockSize < dataBlockLength; subBlockSize <<= 1)
+    for (int subBlockSize = 1; subBlockSize < elemsPerBlock; subBlockSize <<= 1)
     {
         //stride or step
         for (int stride = subBlockSize; stride > 0; stride >>= 1)
         {
             __syncthreads();
-            for (int tx = threadIdx.x; tx < dataBlockLength >> 1; tx += threadsBitonicSort)
+            for (int tx = threadIdx.x; tx < elemsPerBlock >> 1; tx += threadsBitonicSort)
             {
                 bool direction = blockDirection ^ ((tx & subBlockSize) != 0);
                 int index = 2 * tx - (tx & (stride - 1));
@@ -68,7 +66,7 @@ __global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
 
     // Stores sorted elements from shared to global memory
     __syncthreads();
-    for (int tx = threadIdx.x; tx < dataBlockLength; tx += threadsBitonicSort)
+    for (int tx = threadIdx.x; tx < elemsPerBlock; tx += threadsBitonicSort)
     {
         keys[offset + tx] = sortTile[tx];
     }
