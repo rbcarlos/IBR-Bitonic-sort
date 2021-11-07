@@ -112,7 +112,7 @@ void IBR_binotic_sort(
     int stagesInMemory = log2((double)(elemsPerBlock));
     int stagesAll = log2((double)arrayLength);
     int stagesBitonicSort = min(stagesAll, stagesInMemory); // 10 if arrlen > 1024
-
+    
     //=========================================================================================
     //=====================================BS_firstStages======================================
     //=========================================================================================
@@ -195,7 +195,7 @@ void IBR_binotic_sort(
 
         bitonicMergeIntervalsKernel<N_THREADS, ELEMS_PER_THREAD>
             <<<numBlocks, numThreads, sharedMemSize>>>(
-            d_keys, d_keysBuffer, intervals, stage
+            d_keys, d_keysBuffer, d_intervals, stage
         );
 
         //=========================================================================================
