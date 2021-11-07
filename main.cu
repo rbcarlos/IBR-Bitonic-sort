@@ -31,7 +31,7 @@ void IBR_binotic_sort(
     numBlocks = arrayLength / elemsPerBlock;
     numThreads = N_THREADS;
 
-    BS_firstStagesKernel<<<numBlocks, numThreads, sharedMemSize>>>(d_keys, arrayLength);
+    BS_firstStagesKernel<<<numBlocks, numThreads, sharedMemSize>>>(d_keys);
 
     //=========================================================================================
     //=========================================================================================
@@ -78,7 +78,7 @@ void IBR_binotic_sort(
             sharedMemSize = 2 * ELEMS_PER_THREAD * numThreads * sizeof(interval_t);
         
             // only IBR_stages
-            generateIntervalsKernel<<<numBlocks, numThreads, sharedMemSize>>>(
+            IBRContKernel<<<numBlocks, numThreads, sharedMemSize>>>(
                 d_keys, d_intervalsBuffer, d_intervals, arrayLength, stage, stepStart, stepEnd
             );
         }
