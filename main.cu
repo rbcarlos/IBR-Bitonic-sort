@@ -134,7 +134,7 @@ void IBR_binotic_sort(
     for (int phase = phasesBitonicSort + 1; phase <= phasesAll; phase++)
     {
         printf("inside for loop stage %d", phase);
-        //====================BS_2_IBR=======================
+        //====================BS_2_IBR + IBR_stages=======================
         int stepStart = phase;
         int stepEnd = max((double)phasesInMemory, (double)stepStart - phasesInMemory);
 
