@@ -17,8 +17,29 @@ public:
             *elem2 = temp;
         }    
     }
-    static __device__ __host__ inline void compareQ(ElTp *elem1, ElTp *elem2, bool asc, int mid, int s, int e) {}
+    static __device__ __host__ inline void compareQ(ElTp *elem1, ElTp *elem2, bool asc, int mid, int s, int e) 
+    {
+        if (asc ? (el0 > el1) : (el0 < el1))
+        {
+            s = mid + 1;
+        }
+        else
+        {
+            e = mid;
+        }
+    }
 };
+
+/*
+if (asc ? (el0 > el1) : (el0 < el1))
+        {
+            s = mid + 1;
+        }
+        else
+        {
+            e = mid;
+        }
+*/
 
 /*
 Compares 2 elements and exchanges them according to asc.
