@@ -8,7 +8,7 @@ template<class T>
 class Single {
 public:
     typedef T ElTp;
-    static __device__ __host__ inline void compare(ElTp *elem1, ElTp *elem2, bool asc)
+    static __device__ __host__ inline void compareExchange(ElTp *elem1, ElTp *elem2, bool asc)
     { 
         if (asc ? (*elem1 > *elem2) : (*elem1 < *elem2))
         {
@@ -19,7 +19,7 @@ public:
     }
     static __device__ __host__ inline void compareQ(ElTp *elem1, ElTp *elem2, bool asc, int mid, int s, int e) 
     {
-        if (asc ? (el0 > el1) : (el0 < el1))
+        if (asc ? (elem1 > elem2) : (elem1 < elem2))
         {
             s = mid + 1;
         }
@@ -29,17 +29,6 @@ public:
         }
     }
 };
-
-/*
-if (asc ? (el0 > el1) : (el0 < el1))
-        {
-            s = mid + 1;
-        }
-        else
-        {
-            e = mid;
-        }
-*/
 
 /*
 Compares 2 elements and exchanges them according to asc.
@@ -57,10 +46,11 @@ inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
 /*
 Sorts the elements using a regular bitonic sort until the subblocks are too large to be processed in shared memory
 */
-__global__ void BS_firstStagesKernel(data_t *keys)
+template<class KeyTp>
+__global__ void BS_firstStagesKernel(KeyTp::ElTp *keys)
 {
     // dynamically allocate the shared memory
-    extern __shared__ data_t sortTile[];
+    extern __shared__ KeyTp::ElTp sortTile[];
 
     //calculate the offset and length of a block of data processed by the current block
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD;
@@ -89,11 +79,11 @@ __global__ void BS_firstStagesKernel(data_t *keys)
 
                 if (direction)
                 {
-                    compareExchange(&sortTile[index], &sortTile[index + stride], true);
+                    KeyTp::compareExchange(&sortTile[index], &sortTile[index + stride], true);
                 }
                 else
                 {
-                    compareExchange(&sortTile[index], &sortTile[index + stride], false);
+                    KeyTP::compareExchange(&sortTile[index], &sortTile[index + stride], false);
                 }
             }
             __syncthreads();
