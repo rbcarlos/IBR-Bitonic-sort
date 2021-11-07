@@ -29,7 +29,8 @@ __global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
     //calculate the offset and length of a block of data processed by the current block
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD;
     int offset = blockIdx.x * elemsPerBlock;
-    int dataBlockLength =  offset + elemsPerBlock <= tableLen ? elemsPerBlock : tableLen - offset;
+    //int dataBlockLength =  offset + elemsPerBlock <= tableLen ? elemsPerBlock : tableLen - offset;
+    int dataBlockLength = elemsPerBlock;
 
     // If shared memory size is lower than table length, than adjacent blocks have to be ordered in opposite
     // direction in order to create bitonic sequences.
