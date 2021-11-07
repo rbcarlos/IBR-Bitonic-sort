@@ -133,6 +133,7 @@ void IBR_binotic_sort(
     // picks up where BS_firstStages left of if any elements left
     for (int phase = phasesBitonicSort + 1; phase <= phasesAll; phase++)
     {
+        printf("inside for loop stage %d", phase);
         //====================BS_2_IBR=======================
         int stepStart = phase;
         int stepEnd = max((double)phasesInMemory, (double)stepStart - phasesInMemory);
