@@ -109,6 +109,7 @@ void IBR_binotic_sort(
 {
     int elemsPerBlockBitonicSort, phasesBitonicMerge, phasesInitIntervals, phasesGenerateIntervals;
 
+    int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD; //1024
     elemsPerBlockBitonicSort = N_THREADS * ELEMS_PER_THREAD; // 512
     phasesBitonicMerge = log2((double)(N_THREADS * ELEMS_PER_THREAD)); // 10
     //phasesBitonicMerge = log2((double) arrayLength);
@@ -116,18 +117,7 @@ void IBR_binotic_sort(
     phasesGenerateIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 9 
 
     int phasesAll = log2((double)arrayLength);
-    int phasesBitonicSort = log2((double)min(arrayLength, elemsPerBlockBitonicSort)); // 10 if arrlen > 1024
-
-    if (phasesBitonicMerge < phasesBitonicSort)
-    {
-        printf(
-            "\nNumber of phases executed in bitonic merge has to be lower than number of phases "
-            "executed in initial bitonic sort. This is due to the fact, that regular bitonic sort is "
-            "used (not normalized). This way the sort direction for entire thread block can be computed "
-            "when executing bitonic merge, which is much more efficient.\n"
-        );
-        exit(EXIT_FAILURE);
-    }
+    int phasesBitonicSort = log2((double)min(arrayLength, elemsPerBlock)); // 10 if arrlen > 1024
 
     // BS_firstStages
     // note that this does only phasesBitonicSort (log(512) = 9) phases 
