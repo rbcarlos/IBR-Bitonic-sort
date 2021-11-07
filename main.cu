@@ -136,9 +136,20 @@ void IBR_binotic_sort(
         int stepStart = stage;
         int stepEnd = max((double)stagesInMemory, (double)stepStart - stagesInMemory);
 
-        // IBR stages
+        /*
         IBR_stages(
             d_keys, d_intervals, arrayLength, stagesAll, stepStart, stepEnd
+        );
+        */
+        int intervalsLen = 1 << (stagesAll - stepEnd);
+
+        int numThreadsIBR = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
+        int numBlocksIBR = (intervalsLen - 1) / (ELEMS_PER_THREAD * numThreadsIBR) + 1;
+        // "2 *" because of BUFFER MEMORY for intervals
+        sharedMemSize = 2 * ELEMS_PER_THREAD * threadBlockSize * sizeof(interval_t);
+
+        initIntervalsKernel<ELEMS_PER_THREAD><<<numBlocksIBR, numThreadsIBR, sharedMemSize>>>(
+            d_keys, intervals, arrayLength, stepStart, stepEnd
         );
 
         // IBR_stages
