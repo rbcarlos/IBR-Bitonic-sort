@@ -14,14 +14,14 @@ void runBitoicSortRegularKernel(data_t *d_keys, int arrayLength)
 {
     int elemsPerThreadBlock, sharedMemSize;
 
-    elemsPerThreadBlock = THREADS_BITONIC_SORT * ELEMS_BITONIC_SORT;
+    elemsPerThreadBlock = N_THREADS * ELEMS_PER_THREAD;
     sharedMemSize = elemsPerThreadBlock * sizeof(*d_keys);
 
     dim3 dimGrid(arrayLength / elemsPerThreadBlock, 1, 1);
-    dim3 dimBlock(THREADS_BITONIC_SORT, 1, 1);
+    dim3 dimBlock(N_THREADS, 1, 1);
 
     bitonicSortRegularKernel
-        <THREADS_BITONIC_SORT, ELEMS_BITONIC_SORT>
+        <N_THREADS, ELEMS_PER_THREAD>
         <<<dimGrid, dimBlock, sharedMemSize>>>(
         d_keys, arrayLength
     );
@@ -37,15 +37,15 @@ void runInitIntervalsKernel(
 {
     int intervalsLen = 1 << (phasesAll - stepEnd);
 
-    int threadBlockSize = min((intervalsLen - 1) / ELEMS_INIT_INTERVALS + 1, THREADS_INIT_INTERVALS);
-    int numThreadBlocks = (intervalsLen - 1) / (ELEMS_INIT_INTERVALS * threadBlockSize) + 1;
+    int threadBlockSize = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
+    int numThreadBlocks = (intervalsLen - 1) / (ELEMS_PER_THREAD * threadBlockSize) + 1;
     // "2 *" because of BUFFER MEMORY for intervals
-    int sharedMemSize = 2 * ELEMS_INIT_INTERVALS * threadBlockSize * sizeof(interval_t);
+    int sharedMemSize = 2 * ELEMS_PER_THREAD * threadBlockSize * sizeof(interval_t);
 
     dim3 dimGrid(numThreadBlocks, 1, 1);
     dim3 dimBlock(threadBlockSize, 1, 1);
 
-    initIntervalsKernel<ELEMS_INIT_INTERVALS><<<dimGrid, dimBlock, sharedMemSize>>>(
+    initIntervalsKernel<ELEMS_PER_THREAD><<<dimGrid, dimBlock, sharedMemSize>>>(
         d_keys, intervals, arrayLength, stepStart, stepEnd
     );
 }
@@ -60,15 +60,15 @@ void runGenerateIntervalsKernel(
 {
     int intervalsLen = 1 << (phasesAll - stepEnd);
 
-    int threadBlockSize = min((intervalsLen - 1) / ELEMS_GEN_INTERVALS + 1, THREADS_GEN_INTERVALS);
-    int numThreadBlocks = (intervalsLen - 1) / (ELEMS_GEN_INTERVALS * threadBlockSize) + 1;
+    int threadBlockSize = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
+    int numThreadBlocks = (intervalsLen - 1) / (ELEMS_PER_THREAD * threadBlockSize) + 1;
     // "2 *" because of BUFFER MEMORY for intervals
-    int sharedMemSize = 2 * ELEMS_GEN_INTERVALS * threadBlockSize * sizeof(interval_t);
+    int sharedMemSize = 2 * ELEMS_PER_THREAD * threadBlockSize * sizeof(interval_t);
 
     dim3 dimGrid(numThreadBlocks, 1, 1);
     dim3 dimBlock(threadBlockSize, 1, 1);
 
-    generateIntervalsKernel<ELEMS_GEN_INTERVALS><<<dimGrid, dimBlock, sharedMemSize>>>(
+    generateIntervalsKernel<ELEMS_PER_THREAD><<<dimGrid, dimBlock, sharedMemSize>>>(
         d_keys, inputIntervals, outputIntervals, arrayLength, phase, stepStart, stepEnd
     );
 }
@@ -88,13 +88,13 @@ void runBitoicMergeIntervalsKernel(
     int arrayLenRoundedUp = arrayLength;
     int elemsPerThreadBlock, sharedMemSize;
 
-    elemsPerThreadBlock = THREADS_LOCAL_MERGE * ELEMS_LOCAL_MERGE;
+    elemsPerThreadBlock = N_THREADS * ELEMS_PER_THREAD;
     sharedMemSize = elemsPerThreadBlock * sizeof(*d_keys);
 
     dim3 dimGrid(arrayLenRoundedUp / elemsPerThreadBlock, 1, 1);
-    dim3 dimBlock(THREADS_LOCAL_MERGE, 1, 1);
+    dim3 dimBlock(N_THREADS, 1, 1);
 
-    bitonicMergeIntervalsKernel<THREADS_LOCAL_MERGE, ELEMS_LOCAL_MERGE>
+    bitonicMergeIntervalsKernel<N_THREADS, ELEMS_PER_THREAD>
         <<<dimGrid, dimBlock, sharedMemSize>>>(
         d_keys, d_keysBuffer, intervals, phase
     );
@@ -110,11 +110,11 @@ void bitonicSortAdaptiveParallel(
     int arrayLenPower2 = arrayLength;
     int elemsPerBlockBitonicSort, phasesBitonicMerge, phasesInitIntervals, phasesGenerateIntervals;
 
-    elemsPerBlockBitonicSort = THREADS_BITONIC_SORT * ELEMS_BITONIC_SORT; // 512
-    phasesBitonicMerge = log2((double)(THREADS_LOCAL_MERGE * ELEMS_LOCAL_MERGE)); // 10
+    elemsPerBlockBitonicSort = N_THREADS * ELEMS_PER_THREAD; // 512
+    phasesBitonicMerge = log2((double)(N_THREADS * ELEMS_PER_THREAD)); // 10
     //phasesBitonicMerge = log2((double) arrayLength);
-    phasesInitIntervals = log2((double)THREADS_INIT_INTERVALS * ELEMS_INIT_INTERVALS); // 8
-    phasesGenerateIntervals = log2((double)THREADS_GEN_INTERVALS * ELEMS_GEN_INTERVALS); // 9 
+    phasesInitIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 8
+    phasesGenerateIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 9 
 
     int phasesAll = log2((double)arrayLenPower2);
     int phasesBitonicSort = log2((double)min(arrayLenPower2, elemsPerBlockBitonicSort)); // 10 if arrlen > 1024
@@ -216,7 +216,7 @@ int main() {
     cudaMemcpy(d_keys, h_keys, mem_size_keys, cudaMemcpyHostToDevice);
 
     int phasesAll = log2((double)size_keys);
-    int phasesBitonicMerge = log2((double)2 * THREADS_LOCAL_MERGE);
+    int phasesBitonicMerge = log2((double)2 * N_THREADS);
     int intervalsLen = 1 << (phasesAll - phasesBitonicMerge);
 
     // Allocates buffer for keys
