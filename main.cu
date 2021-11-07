@@ -146,10 +146,10 @@ void IBR_binotic_sort(
         int numThreadsIBR = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
         int numBlocksIBR = (intervalsLen - 1) / (ELEMS_PER_THREAD * numThreadsIBR) + 1;
         // "2 *" because of BUFFER MEMORY for intervals
-        sharedMemSize = 2 * ELEMS_PER_THREAD * threadBlockSize * sizeof(interval_t);
+        sharedMemSize = 2 * ELEMS_PER_THREAD * numThreadsIBR * sizeof(interval_t);
 
         initIntervalsKernel<ELEMS_PER_THREAD><<<numBlocksIBR, numThreadsIBR, sharedMemSize>>>(
-            d_keys, intervals, arrayLength, stepStart, stepEnd
+            d_keys, d_intervals, arrayLength, stepStart, stepEnd
         );
 
         // IBR_stages
