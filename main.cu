@@ -129,7 +129,6 @@ void IBR_binotic_sort(
     );
     //==================================================
 
-
     // picks up where BS_firstStages left of if any elements left
     for (int phase = phasesBitonicSort + 1; phase <= phasesAll; phase++)
     {
