@@ -2,8 +2,6 @@
 #ifndef BITONIC_KERNELS
 #define BITONIC_KERNELS
 
-#include "constants.h"
-
 /*
 Compares 2 elements and exchanges them according to sortOrder.
 */

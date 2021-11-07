@@ -4,7 +4,6 @@
 #include <sys/time.h>
 #include <time.h> 
 
-#include "constants.h"
 #include "kernels.cu.h"
 
 typedef struct Interval interval_t;
