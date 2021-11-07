@@ -39,9 +39,10 @@ __global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
     }
     __syncthreads();
 
-    
+    // 2^stage
     for (int subBlockSize = 1; subBlockSize < elemsPerBlock; subBlockSize <<= 1)
     {
+        // 2^step
         for (int stride = subBlockSize; stride > 0; stride >>= 1)
         {
             for (int tx = threadIdx.x; tx < elemsPerBlock >> 1; tx += N_THREADS)
@@ -118,7 +119,6 @@ inline __device__ int binarySearchInterval(data_t* table, interval_t interval, i
 Generates intervals in provided array until size of sub block is grater than end sub block size.
 Sub block size is the size of one block in bitonic merge step.
 */
-template <int elementsPerThread>
 inline __device__ void generateIntervals(
     data_t *table, int subBlockHalfSize, int subBlockSizeEnd, int stride, int activeThreadsPerBlock
 )
@@ -131,7 +131,7 @@ inline __device__ void generateIntervals(
     // active threads to read their corresponding intervals before generating new. For this purpose buffer is used
     // as output array.
     interval_t *intervals = intervalsTile;
-    interval_t *intervalsBuffer = intervalsTile + blockDim.x * elementsPerThread;
+    interval_t *intervalsBuffer = intervalsTile + blockDim.x * ELEMS_PER_THREAD;
 
     for (; subBlockHalfSize >= subBlockSizeEnd; subBlockHalfSize /= 2, stride *= 2, activeThreadsPerBlock *= 2)
     {
@@ -181,15 +181,14 @@ inline __device__ void generateIntervals(
 /*
 Generates initial intervals and continues to evolve them until the end step.
 */
-template <int elemsInitIntervals>
-__global__ void initIntervalsKernel(
+__global__ void IBRKernel(
     data_t *table, interval_t *intervals, int tableLen, int stepStart, int stepEnd
 )
 {
     extern __shared__ interval_t intervalsTile[];
     int subBlockSize = 1 << stepStart;
     int activeThreadsPerBlock = tableLen / subBlockSize / gridDim.x;
-    int elemsPerThreadBlock = blockDim.x * elemsInitIntervals;
+    int elemsPerThreadBlock = blockDim.x * ELEMS_PER_THREAD;
 
     // initialize the intervals 
     for (int tx = threadIdx.x; tx < activeThreadsPerBlock; tx += blockDim.x)
@@ -208,9 +207,7 @@ __global__ void initIntervalsKernel(
     __syncthreads();
 
     // Evolves intervals in shared memory to end step
-    generateIntervals<elemsInitIntervals>(
-        table, subBlockSize / 2, 1 << stepEnd, 1, activeThreadsPerBlock
-    );
+    generateIntervals(table, subBlockSize / 2, 1 << stepEnd, 1, activeThreadsPerBlock);
 
     // Calculates offset in global intervals array
     interval_t *outputIntervalsGlobal = intervals + blockIdx.x * elemsPerThreadBlock;
@@ -229,7 +226,6 @@ __global__ void initIntervalsKernel(
 Reads the existing intervals from global memory and evolves them until the end step.
 Note: "blockDim.x" has to be used throughout the entire kernel, because thread block size is variable
 */
-template <int elemsGenIntervals>
 __global__ void generateIntervalsKernel(
     data_t *table, interval_t *inputIntervals, interval_t *outputIntervals, int tableLen, int phase,
     int stepStart, int stepEnd
@@ -248,11 +244,9 @@ __global__ void generateIntervalsKernel(
     __syncthreads();
 
     // Evolves intervals in shared memory to end step
-    generateIntervals<elemsGenIntervals>(
-        table, subBlockSize / 2, 1 << stepEnd, 1 << (phase - stepStart), activeThreadsPerBlock
-    );
+    generateIntervals(table, subBlockSize / 2, 1 << stepEnd, 1 << (phase - stepStart), activeThreadsPerBlock);
 
-    int elemsPerThreadBlock = blockDim.x * elemsGenIntervals;
+    int elemsPerThreadBlock = blockDim.x * ELEMS_PER_THREAD;
     // Calculates offset in global intervals array
     interval_t *outputIntervalsGlobal = outputIntervals + blockIdx.x * elemsPerThreadBlock;
     // Depending if the number of repetitions is divisible by 2, generated intervals are located in FIRST half
