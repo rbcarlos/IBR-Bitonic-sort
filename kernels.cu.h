@@ -10,7 +10,7 @@ public:
     typedef T ElTp;
     static __device__ __host__ inline void compare(ElTp *elem1, ElTp *elem2, bool asc)
     { 
-        if (asc ? (*elem1 > *elem) : (*elem1 < *elem2))
+        if (asc ? (*elem1 > *elem2) : (*elem1 < *elem2))
         {
             ElTp temp = *elem1;
             *elem1 = *elem2;
