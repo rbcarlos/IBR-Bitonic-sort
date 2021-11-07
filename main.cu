@@ -99,7 +99,7 @@ void IBR_binotic_sort(
         numBlocks = arrayLength/ elemsPerBlock;
         numThreads = N_THREADS;
 
-        bitonicMergeIntervalsKernel<N_THREADS, ELEMS_PER_THREAD>
+        IBR_2_BSKernel<N_THREADS, ELEMS_PER_THREAD>
             <<<numBlocks, numThreads, sharedMemSize>>>(
             d_keys, d_keysBuffer, d_intervals, stage
         );

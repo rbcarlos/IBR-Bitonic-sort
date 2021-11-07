@@ -262,7 +262,7 @@ __global__ void IBR_2_BSKernel(data_t *keys, data_t *keysBuffer, interval_t *int
 
     // Elements inside same sub-block have to be ordered in same direction
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD;
-    int offset = blockIdx.x * elemsPerThreadBlock;
+    int offset = blockIdx.x * elemsPerBlock;
     bool orderAsc = 1 ^ ((offset >> phase) & 1);
 
     // Loads data from global to shared memory
