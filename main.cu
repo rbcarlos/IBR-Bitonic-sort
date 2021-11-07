@@ -28,8 +28,6 @@ Sorts sub-blocks of input data with REGULAR bitonic sort
 */
 void runBitoicSortRegularKernel(data_t *d_keys, int arrayLength)
 {
-    dim3 dimGrid(1,1,1);
-    dim3 dimBlock(1,1,1);
     int elemsPerThreadBlock, sharedMemSize;
 
     elemsPerThreadBlock = N_THREADS * ELEMS_PER_THREAD;
@@ -125,7 +123,6 @@ void IBR_binotic_sort(
     data_t *&d_keys, data_t *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
 )
 {
-    int arrayLenPower2 = arrayLength;
     int elemsPerBlockBitonicSort, phasesBitonicMerge, phasesInitIntervals, phasesGenerateIntervals;
 
     elemsPerBlockBitonicSort = N_THREADS * ELEMS_PER_THREAD; // 512
@@ -134,8 +131,8 @@ void IBR_binotic_sort(
     phasesInitIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 8
     phasesGenerateIntervals = log2((double)N_THREADS * ELEMS_PER_THREAD); // 9 
 
-    int phasesAll = log2((double)arrayLenPower2);
-    int phasesBitonicSort = log2((double)min(arrayLenPower2, elemsPerBlockBitonicSort)); // 10 if arrlen > 1024
+    int phasesAll = log2((double)arrayLength);
+    int phasesBitonicSort = log2((double)min(arrayLength, elemsPerBlockBitonicSort)); // 10 if arrlen > 1024
 
     if (phasesBitonicMerge < phasesBitonicSort)
     {
@@ -162,7 +159,7 @@ void IBR_binotic_sort(
 
         // BS_2_IBR step 
         runInitIntervalsKernel(
-            d_keys, d_intervals, arrayLenPower2, phasesAll, stepStart, stepEnd
+            d_keys, d_intervals, arrayLength, phasesAll, stepStart, stepEnd
         );
 
         // IBR_stages
@@ -176,7 +173,7 @@ void IBR_binotic_sort(
             stepStart = stepEnd;
             stepEnd = max((double)phasesBitonicMerge, (double)stepStart - phasesGenerateIntervals);
             runGenerateIntervalsKernel(
-                d_keys, d_intervalsBuffer, d_intervals, arrayLenPower2, phasesAll, phase, stepStart, stepEnd
+                d_keys, d_intervalsBuffer, d_intervals, arrayLength, phasesAll, phase, stepStart, stepEnd
             );
         }
         
