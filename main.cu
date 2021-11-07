@@ -35,8 +35,8 @@ void runBitoicSortRegularKernel(data_t *d_keys, int arrayLength)
     elemsPerThreadBlock = N_THREADS * ELEMS_PER_THREAD;
     sharedMemSize = elemsPerThreadBlock * sizeof(*d_keys);
 
-    dimGrid(arrayLength / elemsPerThreadBlock, 1, 1);
-    dimBlock(N_THREADS, 1, 1);
+    dim3 dimGrid(arrayLength / elemsPerThreadBlock, 1, 1);
+    dim3 dimBlock(N_THREADS, 1, 1);
 
     bitonicSortRegularKernel
         <N_THREADS, ELEMS_PER_THREAD>
