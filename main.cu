@@ -10,9 +10,8 @@
 /*
 Sorts data with parallel adaptive bitonic sort.
 */
-template<class KeyTp>
 void IBR_binotic_sort(
-    KeyTp::ElTp *&d_keys, data_t *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
+    data_t *&d_keys, data_t *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
 )
 {
     int numBlocks, numThreads, sharedMemSize;
@@ -56,7 +55,7 @@ void IBR_binotic_sort(
         sharedMemSize = 2 * ELEMS_PER_THREAD * numThreads * sizeof(interval_t);
 
         // BS_2_IBR + IBR_stages
-        IBRKernel<KeyTp><<<numBlocks, numThreads, sharedMemSize>>>(d_keys, d_intervals, arrayLength, stepStart, stepEnd);
+        IBRKernel<<<numBlocks, numThreads, sharedMemSize>>>(d_keys, d_intervals, arrayLength, stepStart, stepEnd);
 
         // picks up where the previous call left off if it did not fully fit in  shared memory
         // with 1024 elements per block, this step is only going to be called after 20 stages
@@ -166,7 +165,7 @@ int main() {
     gettimeofday(&t_start, NULL); 
 
     for(int i=0; i<GPU_RUNS; i++){
-        IBR_binotic_sort<Single<int> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
+        IBR_binotic_sort(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
     }
     cudaDeviceSynchronize();
 

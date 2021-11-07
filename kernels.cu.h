@@ -6,28 +6,28 @@
 
 template<class T>
 class Single {
-public:
-    typedef T ElTp;
-    static __device__ __host__ inline void compareExchange(ElTp *elem1, ElTp *elem2, bool asc)
-    { 
-        if (asc ? (*elem1 > *elem2) : (*elem1 < *elem2))
-        {
-            ElTp temp = *elem1;
-            *elem1 = *elem2;
-            *elem2 = temp;
-        }    
-    }
-    static __device__ __host__ inline void compareQ(ElTp *elem1, ElTp *elem2, bool asc, int mid, int s, int e) 
-    {
-        if (asc ? (elem1 > elem2) : (elem1 < elem2))
-        {
-            s = mid + 1;
+    public:
+        typedef T ElTp;
+        static __device__ __host__ inline void compareExchange(ElTp *elem1, ElTp *elem2, bool asc)
+        { 
+            if (asc ? (*elem1 > *elem2) : (*elem1 < *elem2))
+            {
+                ElTp temp = *elem1;
+                *elem1 = *elem2;
+                *elem2 = temp;
+            }    
         }
-        else
+        static __device__ __host__ inline void compareQ(ElTp *elem1, ElTp *elem2, bool asc, int mid, int s, int e) 
         {
-            e = mid;
+            if (asc ? (elem1 > elem2) : (elem1 < elem2))
+            {
+                s = mid + 1;
+            }
+            else
+            {
+                e = mid;
+            }
         }
-    }
 };
 
 /*
@@ -46,11 +46,10 @@ inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
 /*
 Sorts the elements using a regular bitonic sort until the subblocks are too large to be processed in shared memory
 */
-template<class KeyTp>
-__global__ void BS_firstStagesKernel(KeyTp::ElTp *keys)
+__global__ void BS_firstStagesKernel(data_t *keys)
 {
     // dynamically allocate the shared memory
-    extern __shared__ KeyTp::ElTp sortTile[];
+    extern __shared__ data_t sortTile[];
 
     //calculate the offset and length of a block of data processed by the current block
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD;
@@ -79,11 +78,11 @@ __global__ void BS_firstStagesKernel(KeyTp::ElTp *keys)
 
                 if (direction)
                 {
-                    KeyTp::compareExchange(&sortTile[index], &sortTile[index + stride], true);
+                    compareExchange(&sortTile[index], &sortTile[index + stride], true);
                 }
                 else
                 {
-                    KeyTP::compareExchange(&sortTile[index], &sortTile[index + stride], false);
+                    compareExchange(&sortTile[index], &sortTile[index + stride], false);
                 }
             }
             __syncthreads();
