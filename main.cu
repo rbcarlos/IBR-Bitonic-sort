@@ -30,12 +30,12 @@ void BS_firstStages(data_t *d_keys, int arrayLength)
 /*
 Initializes intervals and continues to evolve them until the end step.
 */
-void runInitIntervalsKernel(
-    data_t *d_keys, interval_t *intervals, int arrayLength, int phasesAll, int stepStart,
+void IBR_stages(
+    data_t *d_keys, interval_t *intervals, int arrayLength, int stagesAll, int stepStart,
     int stepEnd
 )
 {
-    int intervalsLen = 1 << (phasesAll - stepEnd);
+    int intervalsLen = 1 << (stagesAll - stepEnd);
 
     int threadBlockSize = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
     int numThreadBlocks = (intervalsLen - 1) / (ELEMS_PER_THREAD * threadBlockSize) + 1;
@@ -54,11 +54,11 @@ void runInitIntervalsKernel(
 Evolves intervals from start step to end step.
 */
 void runGenerateIntervalsKernel(
-    data_t *d_keys, interval_t *inputIntervals, interval_t *outputIntervals, int arrayLength, int phasesAll,
-    int phase, int stepStart, int stepEnd
+    data_t *d_keys, interval_t *inputIntervals, interval_t *outputIntervals, int arrayLength, int stagesAll,
+    int stage, int stepStart, int stepEnd
 )
 {
-    int intervalsLen = 1 << (phasesAll - stepEnd);
+    int intervalsLen = 1 << (stagesAll - stepEnd);
 
     int threadBlockSize = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
     int numThreadBlocks = (intervalsLen - 1) / (ELEMS_PER_THREAD * threadBlockSize) + 1;
@@ -69,7 +69,7 @@ void runGenerateIntervalsKernel(
     dim3 dimBlock(threadBlockSize, 1, 1);
 
     generateIntervalsKernel<ELEMS_PER_THREAD><<<dimGrid, dimBlock, sharedMemSize>>>(
-        d_keys, inputIntervals, outputIntervals, arrayLength, phase, stepStart, stepEnd
+        d_keys, inputIntervals, outputIntervals, arrayLength, stage, stepStart, stepEnd
     );
 }
 
@@ -78,13 +78,13 @@ Runs kernel, which performs bitonic merge from provided intervals.
 */
 void runBitoicMergeIntervalsKernel(
     data_t *d_keys, data_t *d_keysBuffer, interval_t *intervals,
-    int arrayLength, int phase
+    int arrayLength, int stage
 )
 {
     // If table length is not power of 2, than table is padded to the next power of 2. In that case it is not
     // necessary for entire padded table to be merged. It is only necessary that table is merged to the next
-    // multiple of phase stride.
-    //int arrayLenRoundedUp = roundUp(arrayLength, 1 << phase);
+    // multiple of stage stride.
+    //int arrayLenRoundedUp = roundUp(arrayLength, 1 << stage);
     int arrayLenRoundedUp = arrayLength;
     int elemsPerThreadBlock, sharedMemSize;
 
@@ -96,7 +96,7 @@ void runBitoicMergeIntervalsKernel(
 
     bitonicMergeIntervalsKernel<N_THREADS, ELEMS_PER_THREAD>
         <<<dimGrid, dimBlock, sharedMemSize>>>(
-        d_keys, d_keysBuffer, intervals, phase
+        d_keys, d_keysBuffer, intervals, stage
     );
 }
 
@@ -109,12 +109,12 @@ void IBR_binotic_sort(
 {
     int numBlocks, numThreads, sharedMemSize;
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD; //1024
-    int phasesInMemory = log2((double)(elemsPerBlock));
-    int phasesAll = log2((double)arrayLength);
-    int phasesBitonicSort = min(phasesAll, phasesInMemory); // 10 if arrlen > 1024
+    int stagesInMemory = log2((double)(elemsPerBlock));
+    int stagesAll = log2((double)arrayLength);
+    int stagesBitonicSort = min(stagesAll, stagesInMemory); // 10 if arrlen > 1024
 
     //===================BS_firstStages=================
-    // note that this does only phasesBitonicSort (log(1024) = 10) phases 
+    // note that this does only stagesBitonicSort (log(1024) = 10) stages 
     // if arrlen <= 1024, only regular bitonic sort is used
     //BS_firstStages(d_keys, arrayLength);
     sharedMemSize = elemsPerBlock * sizeof(*d_keys);
@@ -130,37 +130,37 @@ void IBR_binotic_sort(
     //==================================================
 
     // picks up where BS_firstStages left of if any elements left
-    for (int phase = phasesBitonicSort + 1; phase <= phasesAll; phase++)
+    for (int stage = stagesBitonicSort + 1; stage <= stagesAll; stage++)
     {
         //====================BS_2_IBR + IBR_stages=======================
-        int stepStart = phase;
-        int stepEnd = max((double)phasesInMemory, (double)stepStart - phasesInMemory);
+        int stepStart = stage;
+        int stepEnd = max((double)stagesInMemory, (double)stepStart - stagesInMemory);
 
-        // BS_2_IBR step 
-        runInitIntervalsKernel(
-            d_keys, d_intervals, arrayLength, phasesAll, stepStart, stepEnd
+        // IBR stages
+        IBR_stages(
+            d_keys, d_intervals, arrayLength, stagesAll, stepStart, stepEnd
         );
-        //===================================================
 
         // IBR_stages
-        // After initial intervals were generated intervals have to be evolved to the end step
-        while (stepEnd > phasesInMemory)
+        // picks up where the previous call left off if it did not fully fit in memory
+        while (stepEnd > stagesInMemory)
         {
             interval_t *tempIntervals = d_intervals;
             d_intervals = d_intervalsBuffer;
             d_intervalsBuffer = tempIntervals;
 
             stepStart = stepEnd;
-            stepEnd = max((double)phasesInMemory, (double)stepStart - phasesInMemory);
+            stepEnd = max((double)stagesInMemory, (double)stepStart - stagesInMemory);
             runGenerateIntervalsKernel(
-                d_keys, d_intervalsBuffer, d_intervals, arrayLength, phasesAll, phase, stepStart, stepEnd
+                d_keys, d_intervalsBuffer, d_intervals, arrayLength, stagesAll, stage, stepStart, stepEnd
             );
         }
+        //===================================================
         
-        // BS_lastSteps
+        // IBR_2_BS
         // Global merge with intervals
         runBitoicMergeIntervalsKernel(
-            d_keys, d_keysBuffer, d_intervals, arrayLength, phase
+            d_keys, d_keysBuffer, d_intervals, arrayLength, stage
         );
 
         // Exchanges keys
@@ -210,9 +210,9 @@ int main() {
 
     cudaMemcpy(d_keys, h_keys, mem_size_keys, cudaMemcpyHostToDevice);
 
-    int phasesAll = log2((double)size_keys);
-    int phasesBitonicMerge = log2((double)2 * N_THREADS);
-    int intervalsLen = 1 << (phasesAll - phasesBitonicMerge);
+    int stagesAll = log2((double)size_keys);
+    int stagesBitonicMerge = log2((double)2 * N_THREADS);
+    int intervalsLen = 1 << (stagesAll - stagesBitonicMerge);
 
     // Allocates buffer for keys
     data_t* d_keysBuffer;
