@@ -4,23 +4,8 @@
 #include <sys/time.h>
 #include <time.h> 
 
+#include "constants.h"
 #include "kernels.cu.h"
-
-typedef struct Interval interval_t;
-typedef int data_t;
-#define N_ELEMENTS 1048576
-#define GPU_RUNS 100
-
-struct Interval
-{
-    int offset0;
-    int length0;
-    int offset1;
-    int length1;
-};
-
-#define N_THREADS 256
-#define ELEMS_PER_THREAD 4
 
 /*
 Sorts sub-blocks of input data with REGULAR bitonic sort
