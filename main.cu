@@ -10,7 +10,7 @@
 /*
 Sorts sub-blocks of input data with REGULAR bitonic sort
 */
-void runBitoicSortRegularKernel(data_t *d_keys, int arrayLength)
+void BS_firstStages(data_t *d_keys, int arrayLength)
 {
     int elemsPerThreadBlock, sharedMemSize;
 
@@ -113,9 +113,9 @@ void IBR_binotic_sort(
     int phasesAll = log2((double)arrayLength);
     int phasesBitonicSort = min(phasesAll, phasesInMemory); // 10 if arrlen > 1024
 
-    // BS_firstStages
-    // note that this does only phasesBitonicSort (log(512) = 9) phases 
-    runBitoicSortRegularKernel(d_keys, arrayLength);
+    // note that this does only phasesBitonicSort (log(1024) = 10) phases 
+    // if arrlen <= 1024, only regular bitonic sort is used
+    BS_firstStages(d_keys, arrayLength);
     
     for (int phase = phasesBitonicSort + 1; phase <= phasesAll; phase++)
     {
