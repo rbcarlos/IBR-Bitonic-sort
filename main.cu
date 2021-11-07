@@ -8,99 +8,6 @@
 #include "kernels.cu.h"
 
 /*
-Sorts sub-blocks of input data with REGULAR bitonic sort
-*/
-void BS_firstStages(data_t *d_keys, int arrayLength)
-{
-    int elemsPerThreadBlock, sharedMemSize;
-
-    elemsPerThreadBlock = N_THREADS * ELEMS_PER_THREAD;
-    sharedMemSize = elemsPerThreadBlock * sizeof(*d_keys);
-
-    dim3 dimGrid(arrayLength / elemsPerThreadBlock, 1, 1);
-    dim3 dimBlock(N_THREADS, 1, 1);
-
-    bitonicSortRegularKernel
-        <N_THREADS, ELEMS_PER_THREAD>
-        <<<dimGrid, dimBlock, sharedMemSize>>>(
-        d_keys, arrayLength
-    );
-}
-
-/*
-Initializes intervals and continues to evolve them until the end step.
-*/
-void IBR_stages(
-    data_t *d_keys, interval_t *intervals, int arrayLength, int stagesAll, int stepStart,
-    int stepEnd
-)
-{
-    int intervalsLen = 1 << (stagesAll - stepEnd);
-
-    int threadBlockSize = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
-    int numThreadBlocks = (intervalsLen - 1) / (ELEMS_PER_THREAD * threadBlockSize) + 1;
-    // "2 *" because of BUFFER MEMORY for intervals
-    int sharedMemSize = 2 * ELEMS_PER_THREAD * threadBlockSize * sizeof(interval_t);
-
-    dim3 dimGrid(numThreadBlocks, 1, 1);
-    dim3 dimBlock(threadBlockSize, 1, 1);
-
-    initIntervalsKernel<ELEMS_PER_THREAD><<<dimGrid, dimBlock, sharedMemSize>>>(
-        d_keys, intervals, arrayLength, stepStart, stepEnd
-    );
-}
-
-/*
-Evolves intervals from start step to end step.
-*/
-void runGenerateIntervalsKernel(
-    data_t *d_keys, interval_t *inputIntervals, interval_t *outputIntervals, int arrayLength, int stagesAll,
-    int stage, int stepStart, int stepEnd
-)
-{
-    int intervalsLen = 1 << (stagesAll - stepEnd);
-
-    int threadBlockSize = min((intervalsLen - 1) / ELEMS_PER_THREAD + 1, N_THREADS);
-    int numThreadBlocks = (intervalsLen - 1) / (ELEMS_PER_THREAD * threadBlockSize) + 1;
-    // "2 *" because of BUFFER MEMORY for intervals
-    int sharedMemSize = 2 * ELEMS_PER_THREAD * threadBlockSize * sizeof(interval_t);
-
-    dim3 dimGrid(numThreadBlocks, 1, 1);
-    dim3 dimBlock(threadBlockSize, 1, 1);
-
-    generateIntervalsKernel<ELEMS_PER_THREAD><<<dimGrid, dimBlock, sharedMemSize>>>(
-        d_keys, inputIntervals, outputIntervals, arrayLength, stage, stepStart, stepEnd
-    );
-}
-
-/*
-Runs kernel, which performs bitonic merge from provided intervals.
-*/
-void runBitoicMergeIntervalsKernel(
-    data_t *d_keys, data_t *d_keysBuffer, interval_t *intervals,
-    int arrayLength, int stage
-)
-{
-    // If table length is not power of 2, than table is padded to the next power of 2. In that case it is not
-    // necessary for entire padded table to be merged. It is only necessary that table is merged to the next
-    // multiple of stage stride.
-    //int arrayLenRoundedUp = roundUp(arrayLength, 1 << stage);
-    int arrayLenRoundedUp = arrayLength;
-    int elemsPerThreadBlock, sharedMemSize;
-
-    elemsPerThreadBlock = N_THREADS * ELEMS_PER_THREAD;
-    sharedMemSize = elemsPerThreadBlock * sizeof(*d_keys);
-
-    dim3 dimGrid(arrayLenRoundedUp / elemsPerThreadBlock, 1, 1);
-    dim3 dimBlock(N_THREADS, 1, 1);
-
-    bitonicMergeIntervalsKernel<N_THREADS, ELEMS_PER_THREAD>
-        <<<dimGrid, dimBlock, sharedMemSize>>>(
-        d_keys, d_keysBuffer, intervals, stage
-    );
-}
-
-/*
 Sorts data with parallel adaptive bitonic sort.
 */
 void IBR_binotic_sort(
@@ -112,7 +19,7 @@ void IBR_binotic_sort(
     int stagesInMemory = log2((double)(elemsPerBlock));
     int stagesAll = log2((double)arrayLength);
     int stagesBitonicSort = min(stagesAll, stagesInMemory); // 10 if arrlen > 1024
-    
+
     //=========================================================================================
     //=====================================BS_firstStages======================================
     //=========================================================================================
