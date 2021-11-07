@@ -105,27 +105,27 @@ Finds q which is used to generate the intervals
 */
 inline __device__ int findQ(data_t* keys, interval_t interval, int subBlockHalfLen, bool asc)
 {
-    // Depending which interval is longer, different start and end indexes are used
-    int indexStart = 0; //interval.length0 <= interval.length1 ? 0 : subBlockHalfLen - interval.length1;
-    int indexEnd = interval.length0; //interval.length0 <= interval.length1 ? interval.length0 : subBlockHalfLen;
+    // chooses the shorter interval
+    int s = interval.length0 <= interval.length1 ? 0 : subBlockHalfLen - interval.length1;
+    int e = interval.length0 <= interval.length1 ? interval.length0 : subBlockHalfLen;
 
-    while (indexStart < indexEnd)
+    while (s < e)
     {
-        int index = indexStart + (indexEnd - indexStart) / 2;
-        data_t el0 = get(keys, interval, index);
-        data_t el1 = get(keys, interval, index + subBlockHalfLen);
+        int mid = s + (e - s) / 2;
+        data_t el0 = get(keys, interval, mid);
+        data_t el1 = get(keys, interval, mid + subBlockHalfLen);
 
         if (asc ? (el0 > el1) : (el0 < el1))
         {
-            indexStart = index + 1;
+            s = mid + 1;
         }
         else
         {
-            indexEnd = index;
+            e = mid;
         }
     }
 
-    return indexStart;
+    return s;
 }
 
 /*
