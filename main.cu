@@ -133,7 +133,6 @@ void IBR_binotic_sort(
     // picks up where BS_firstStages left of if any elements left
     for (int phase = phasesBitonicSort + 1; phase <= phasesAll; phase++)
     {
-        printf("inside for loop stage %d", phase);
         //====================BS_2_IBR + IBR_stages=======================
         int stepStart = phase;
         int stepEnd = max((double)phasesInMemory, (double)stepStart - phasesInMemory);
@@ -148,7 +147,6 @@ void IBR_binotic_sort(
         // After initial intervals were generated intervals have to be evolved to the end step
         while (stepEnd > phasesInMemory)
         {
-            printf("Inside while loop stage %d", phase);
             interval_t *tempIntervals = d_intervals;
             d_intervals = d_intervalsBuffer;
             d_intervalsBuffer = tempIntervals;

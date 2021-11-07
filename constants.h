@@ -4,7 +4,7 @@
 typedef struct Interval interval_t;
 typedef long data_t;
 #define N_ELEMENTS 33554432
-#define GPU_RUNS 1
+#define GPU_RUNS 100
 
 struct Interval
 {
