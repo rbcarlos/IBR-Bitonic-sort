@@ -184,7 +184,6 @@ __global__ void IBRKernel(
     // first step is also the index of phase
     int subBlockSize = 1 << stepStart;
     int activeThreadsPerBlock = arrayLength / subBlockSize / gridDim.x;
-    int elemsPerThreadBlock = blockDim.x * ELEMS_PER_THREAD;
 
     // initialize the intervals 
     for (int tx = threadIdx.x; tx < activeThreadsPerBlock; tx += blockDim.x)
@@ -204,12 +203,13 @@ __global__ void IBRKernel(
     // Evolves intervals in shared memory to end step
     generateIntervals(keys, subBlockSize / 2, 1 << stepEnd, 1, activeThreadsPerBlock);
 
+    int elemsPerBlock = blockDim.x * ELEMS_PER_THREAD;
     // calculate offset in global intervals array
-    interval_t *outputIntervalsGlobal = intervals + blockIdx.x * elemsPerThreadBlock;
+    interval_t *outputIntervalsGlobal = intervals + blockIdx.x * elemsPerBlock;
     // calculate offset in local intervals array
-    interval_t *outputIntervalsLocal = intervalsTile + ((stepStart - stepEnd) % 2 != 0 ? elemsPerThreadBlock : 0);
+    interval_t *outputIntervalsLocal = intervalsTile + ((stepStart - stepEnd) % 2 != 0 ? elemsPerBlock : 0);
 
-    for (int tx = threadIdx.x; tx < elemsPerThreadBlock; tx += blockDim.x)
+    for (int tx = threadIdx.x; tx < elemsPerBlock; tx += blockDim.x)
     {
         outputIntervalsGlobal[tx] = outputIntervalsLocal[tx];
     }
@@ -240,44 +240,42 @@ __global__ void IBRContKernel(
     // 1 << (phase - stepStart) picks up where it left off
     generateIntervals(table, subBlockSize / 2, 1 << stepEnd, 1 << (phase - stepStart), activeThreadsPerBlock);
 
-    int elemsPerThreadBlock = blockDim.x * ELEMS_PER_THREAD;
+    int elemsPerBlock = blockDim.x * ELEMS_PER_THREAD;
     // calculate offset in global intervals array
-    interval_t *outputIntervalsGlobal = outputIntervals + blockIdx.x * elemsPerThreadBlock;
+    interval_t *outputIntervalsGlobal = outputIntervals + blockIdx.x * elemsPerBlock;
     // calculate offset in local intervals array
-    interval_t *outputIntervalsLocal = intervalsTile + ((stepStart - stepEnd) % 2 != 0 ? elemsPerThreadBlock : 0);
+    interval_t *outputIntervalsLocal = intervalsTile + ((stepStart - stepEnd) % 2 != 0 ? elemsPerBlock : 0);
 
-    for (int tx = threadIdx.x; tx < elemsPerThreadBlock; tx += blockDim.x)
+    for (int tx = threadIdx.x; tx < elemsPerBlock; tx += blockDim.x)
     {
         outputIntervalsGlobal[tx] = outputIntervalsLocal[tx];
     }
 }
 
 /*
-Global bitonic merge for sections, where stride IS GREATER OR EQUAL than max shared memory size.
-Executes regular bitonic merge. Reads data from provided intervals.
+Merges the blocks using the intervals
 */
-template <int threadsMerge, int elemsMerge>
-__global__ void bitonicMergeIntervalsKernel(data_t *keys, data_t *keysBuffer, interval_t *intervals, int phase)
+__global__ void IBR_2_BSKernel(data_t *keys, data_t *keysBuffer, interval_t *intervals, int phase)
 {
     extern __shared__ data_t mergeTile[];
     interval_t interval = intervals[blockIdx.x];
 
     // Elements inside same sub-block have to be ordered in same direction
-    int elemsPerThreadBlock = threadsMerge * elemsMerge;
+    int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD;
     int offset = blockIdx.x * elemsPerThreadBlock;
     bool orderAsc = 1 ^ ((offset >> phase) & 1);
 
     // Loads data from global to shared memory
-    for (int tx = threadIdx.x; tx < elemsPerThreadBlock; tx += threadsMerge)
+    for (int tx = threadIdx.x; tx < elemsPerBlock; tx += N_THREADS)
     {
         mergeTile[tx] = get(keys, interval, tx);
     }
     __syncthreads();
 
     // Bitonic merge
-    for (int stride = elemsPerThreadBlock / 2; stride > 0; stride >>= 1)
+    for (int stride = elemsPerBlock / 2; stride > 0; stride >>= 1)
     {
-        for (int tx = threadIdx.x; tx < elemsPerThreadBlock / 2; tx += threadsMerge)
+        for (int tx = threadIdx.x; tx < elemsPerBlock / 2; tx += N_THREADS)
         {
             int index = 2 * tx - (tx & (stride - 1));
 
@@ -294,7 +292,7 @@ __global__ void bitonicMergeIntervalsKernel(data_t *keys, data_t *keysBuffer, in
     }
 
     // Stores sorted data to buffer array
-    for (int tx = threadIdx.x; tx < elemsPerThreadBlock; tx += threadsMerge)
+    for (int tx = threadIdx.x; tx < elemsPerBlock; tx += N_THREADS)
     {
         keysBuffer[offset + tx] = mergeTile[tx];
     }
