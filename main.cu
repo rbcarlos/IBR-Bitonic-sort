@@ -12,7 +12,7 @@ Sorts data with parallel adaptive bitonic sort.
 */
 template<class KeyTp>
 void IBR_binotic_sort(
-    data_t *&d_keys, data_t *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
+    KeyTp::ElTp *&d_keys, data_t *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
 )
 {
     int numBlocks, numThreads, sharedMemSize;
@@ -144,7 +144,7 @@ int main() {
     }
     printf("\n");
     */
-    Single<int>::ElTp* d_keys;
+    data_t* d_keys;
     cudaMalloc((void**) &d_keys, mem_size_keys);
 
     cudaMemcpy(d_keys, h_keys, mem_size_keys, cudaMemcpyHostToDevice);
