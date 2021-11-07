@@ -172,7 +172,7 @@ void IBR_binotic_sort(
             sharedMemSize = 2 * ELEMS_PER_THREAD * numThreads * sizeof(interval_t);
         
             generateIntervalsKernel<ELEMS_PER_THREAD><<<numBlocks, numThreads, sharedMemSize>>>(
-                d_keys, inputIntervals, outputIntervals, arrayLength, stage, stepStart, stepEnd
+                d_keys, d_intervalsBuffer, d_intervals, arrayLength, stage, stepStart, stepEnd
             );
         }
         //===================================================
