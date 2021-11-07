@@ -107,16 +107,28 @@ void IBR_binotic_sort(
     data_t *&d_keys, data_t *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
 )
 {
-
+    int numBlocks, numThreads
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD; //1024
     int phasesInMemory = log2((double)(elemsPerBlock));
     int phasesAll = log2((double)arrayLength);
     int phasesBitonicSort = min(phasesAll, phasesInMemory); // 10 if arrlen > 1024
 
+    //===================BS_firstStages=================
     // note that this does only phasesBitonicSort (log(1024) = 10) phases 
     // if arrlen <= 1024, only regular bitonic sort is used
-    BS_firstStages(d_keys, arrayLength);
-    
+    //BS_firstStages(d_keys, arrayLength);
+    sharedMemSize = elemsPerBlock * sizeof(*d_keys);
+
+    numBlocks = arrayLength / elemsPerBlock;
+    numThreads = N_THREADS;
+
+    bitonicSortRegularKernel
+        <N_THREADS, ELEMS_PER_THREAD>
+        <<<numBlocks, numThreads, sharedMemSize>>>(
+        d_keys, arrayLength
+    );
+    //==================================================
+
     for (int phase = phasesBitonicSort + 1; phase <= phasesAll; phase++)
     {
         int stepStart = phase;
