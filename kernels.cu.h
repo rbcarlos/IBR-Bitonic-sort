@@ -35,7 +35,7 @@ __global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
     bool blockDirection = 1 ^ (blockIdx.x & 1);
 
     // Loads data into shared memory with coallesced access
-    for (int tx = threadIdx.x; tx < elemsPerBlock; tx += threadsBitonicSort)
+    for (int tx = threadIdx.x; tx < elemsPerBlock; tx += N_THREADS)
     {
         sortTile[tx] = keys[offset + tx];
     }
@@ -47,7 +47,7 @@ __global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
         for (int stride = subBlockSize; stride > 0; stride >>= 1)
         {
             __syncthreads();
-            for (int tx = threadIdx.x; tx < elemsPerBlock >> 1; tx += threadsBitonicSort)
+            for (int tx = threadIdx.x; tx < elemsPerBlock >> 1; tx += N_THREADS)
             {
                 bool direction = blockDirection ^ ((tx & subBlockSize) != 0);
                 int index = 2 * tx - (tx & (stride - 1));
@@ -66,7 +66,7 @@ __global__ void BS_firstStagesKernel(data_t *keys, int tableLen)
 
     // Stores sorted elements from shared to global memory
     __syncthreads();
-    for (int tx = threadIdx.x; tx < elemsPerBlock; tx += threadsBitonicSort)
+    for (int tx = threadIdx.x; tx < elemsPerBlock; tx += N_THREADS)
     {
         keys[offset + tx] = sortTile[tx];
     }
