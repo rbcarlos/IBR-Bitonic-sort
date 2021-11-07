@@ -113,7 +113,10 @@ void IBR_binotic_sort(
     int stagesAll = log2((double)arrayLength);
     int stagesBitonicSort = min(stagesAll, stagesInMemory); // 10 if arrlen > 1024
 
-    //===================BS_firstStages=================
+    //=========================================================================================
+    //=====================================BS_firstStages======================================
+    //=========================================================================================
+
     // note that this does only stagesBitonicSort (log(1024) = 10) stages 
     // if arrlen <= 1024, only regular bitonic sort is used
     //BS_firstStages(d_keys, arrayLength);
@@ -127,12 +130,18 @@ void IBR_binotic_sort(
         <<<numBlocks, numThreads, sharedMemSize>>>(
         d_keys, arrayLength
     );
-    //==================================================
+
+    //=========================================================================================
+    //=========================================================================================
+    //=========================================================================================
 
     // picks up where BS_firstStages left of if any elements left
     for (int stage = stagesBitonicSort + 1; stage <= stagesAll; stage++)
     {
-        //====================BS_2_IBR + IBR_stages=======================
+        //=========================================================================================
+        //=================================BS_2_IBR + IBR_stages===================================
+        //=========================================================================================
+
         int stepStart = stage;
         int stepEnd = max((double)stagesInMemory, (double)stepStart - stagesInMemory);
 
@@ -170,13 +179,28 @@ void IBR_binotic_sort(
                 d_keys, d_intervalsBuffer, d_intervals, arrayLength, stage, stepStart, stepEnd
             );
         }
-        //===================================================
+
+        //=========================================================================================
+        //=========================================================================================
+        //=========================================================================================
         
-        // IBR_2_BS
-        // Global merge with intervals
-        runBitoicMergeIntervalsKernel(
-            d_keys, d_keysBuffer, d_intervals, arrayLength, stage
+        //=========================================================================================
+        //========================================IBR_2_BS=========================================
+        //=========================================================================================
+
+        sharedMemSize = elemsPerBlock * sizeof(*d_keys);
+
+        numBlocks = arrayLength/ elemsPerBlock;
+        numThreads = N_THREADS;
+
+        bitonicMergeIntervalsKernel<N_THREADS, ELEMS_PER_THREAD>
+            <<<numBlocks, numThreads, sharedMemSize>>>(
+            d_keys, d_keysBuffer, intervals, stage
         );
+
+        //=========================================================================================
+        //=========================================================================================
+        //=========================================================================================
 
         // Exchanges keys
         data_t *tempTable = d_keys;
