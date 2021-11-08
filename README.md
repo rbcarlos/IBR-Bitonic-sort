@@ -11,3 +11,9 @@ Note: When changing the data type the ```%lf``` on line 167 of the ```main.cu```
 The datasets lie in the datasets folder and hold two subdirectories for integers (32 and 64 bit) and floating point numbers (32 and 64 bit).
 
 The program will loop through different array sizes from $2^{10}$ to $2^{20}$.
+
+## CUB code
+
+The cub-code directory contains the CUB library as well as all the neccessary code to run the code used in the report.
+
+The code uses uniformly distributed random 64-bit integers keys by default.
