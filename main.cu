@@ -146,7 +146,7 @@ int main() {
     srand(2006);
 
     // test
-    for(int j=10; j<=11; j++)
+    for(int j=10; j<=20; j++)
     {
         int n_el = pow((double)2, (double)j);
         unsigned long int elapsed;
@@ -161,20 +161,20 @@ int main() {
         // creating a FILE variable
         FILE *fptr;
 
-        fptr = fopen("datasets/floats/random_uniform.txt", "r");
+        fptr = fopen("datasets/floats/sorted_seq.txt", "r");
         for (int i=0; i< n_el; i++)
         {
             fscanf(fptr, "%f", &h_keys[i]);
         };
         fclose(fptr);
 
-        
+        /*
         printf("Unsorted keys:\n");
         for(int i = 0; i<size_keys; i++ ){
             printf("%f, ", h_keys[i]);
         }
         printf("\n");
-        
+        */
 
         Single<float>::ElTp* d_keys;
         cudaMalloc((void**) &d_keys, mem_size_keys);
@@ -210,13 +210,13 @@ int main() {
 
         printf("Bitonic sort on %d elements (type int) runs in: %lu microsecs\n", size_keys, elapsed);
 
-        
+        /*
         printf("Sorted keys:\n");
         for(int i = 0; i<size_keys; i++ ){
             printf("%f, ", h_keys[i]);
         }
         printf("\n");
-        
+        */
 
         for(int i = 0; i<size_keys-1; i++) {
             if(h_keys[i] > h_keys[i+1]) {
