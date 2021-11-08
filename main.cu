@@ -12,7 +12,7 @@ Sorts data with parallel adaptive bitonic sort.
 */
 template<class OpTp>
 void IBR_binotic_sort(
-    OpTp::ElTp *&d_keys, OpTp::ElTp *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
+    typename OpTp::ElTp *&d_keys, typename OpTp::ElTp *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
 )
 {
     int numBlocks, numThreads, sharedMemSize;
