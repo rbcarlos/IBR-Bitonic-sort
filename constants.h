@@ -2,7 +2,7 @@
 #define CONSTANTS_BITONIC_SORT_H
 
 typedef struct Interval interval_t;
-typedef int data_t;
+typedef long data_t;
 #define N_ELEMENTS 1048576
 #define GPU_RUNS 100
 

@@ -134,7 +134,7 @@ int main() {
 
     int size_keys = N_ELEMENTS;
     int mem_size_keys = size_keys * sizeof(data_t);
-    Single<int>::ElTp* h_keys = (Single<int>::ElTp*) malloc(mem_size_keys); 
+    Single<long>::ElTp* h_keys = (Single<long>::ElTp*) malloc(mem_size_keys); 
 
     randomInit(h_keys, size_keys);
     /*
