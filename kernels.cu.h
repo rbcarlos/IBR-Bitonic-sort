@@ -114,7 +114,8 @@ __device__ data_t get(data_t *keys, interval_t interval, int index)
 /*
 Finds q which is used to generate the intervals
 */
-inline __device__ int findQ(data_t* keys, interval_t interval, int subBlockHalfLen, bool asc)
+template<class OpTp>
+inline __device__ int findQ(typename OpTp::ElTp* keys, interval_t interval, int subBlockHalfLen, bool asc)
 {
     // chooses the shorter interval
     int s = interval.length0 <= interval.length1 ? 0 : subBlockHalfLen - interval.length1;
@@ -123,9 +124,11 @@ inline __device__ int findQ(data_t* keys, interval_t interval, int subBlockHalfL
     while (s < e)
     {
         int mid = s + (e - s) / 2;
-        data_t el0 = get(keys, interval, mid);
-        data_t el1 = get(keys, interval, mid + subBlockHalfLen);
+        typename OpTp::ElTp el0 = get(keys, interval, mid);
+        typename OpTp::ElTp el1 = get(keys, interval, mid + subBlockHalfLen);
 
+        OpTp::compareQ(el0, el1, asc, mid, s, e);
+        /*
         if (asc ? (el0 > el1) : (el0 < el1))
         {
             s = mid + 1;
@@ -134,6 +137,7 @@ inline __device__ int findQ(data_t* keys, interval_t interval, int subBlockHalfL
         {
             e = mid;
         }
+        */
     }
 
     return s;
@@ -142,8 +146,9 @@ inline __device__ int findQ(data_t* keys, interval_t interval, int subBlockHalfL
 /*
 generates the intervals until the end block size is reached
 */
+template<class OpTp>
 inline __device__ void generateIntervals(
-    data_t *keys, int subBlockHalfSize, int subBlockSizeEnd, int stride, int activeThreadsPerBlock
+    typename OpTp::ElTp *keys, int subBlockHalfSize, int subBlockSizeEnd, int stride, int activeThreadsPerBlock
 )
 {
     extern __shared__ interval_t intervalsTile[];
@@ -167,11 +172,11 @@ inline __device__ void generateIntervals(
             // Finds q - an index, where exchanges begin in bitonic sequences being merged.
             if (orderAsc)
             {
-                q = findQ(keys, interval, subBlockHalfSize, true);
+                q = findQ<OpTp>(keys, interval, subBlockHalfSize, true);
             }
             else
             {
-                q = findQ(keys, interval, subBlockHalfSize, false);
+                q = findQ<OpTp>(keys, interval, subBlockHalfSize, false);
             }
 
             // Output indexes of newly generated intervals
@@ -202,8 +207,9 @@ inline __device__ void generateIntervals(
 /*
 Generates initial intervals and intervals for all steps
 */
+template<class OpTp>
 __global__ void IBRKernel(
-    data_t *keys, interval_t *intervals, int arrayLength, int stepStart, int stepEnd
+    typename OpTp::ElTp *keys, interval_t *intervals, int arrayLength, int stepStart, int stepEnd
 )
 {
     // dynamically allocate shared memory
@@ -228,7 +234,7 @@ __global__ void IBRKernel(
     __syncthreads();
 
     // Evolves intervals in shared memory to end step
-    generateIntervals(keys, subBlockSize / 2, 1 << stepEnd, 1, activeThreadsPerBlock);
+    generateIntervals<OpTp>(keys, subBlockSize / 2, 1 << stepEnd, 1, activeThreadsPerBlock);
 
     int elemsPerBlock = blockDim.x * ELEMS_PER_THREAD;
     // calculate offset in global intervals array
@@ -245,8 +251,9 @@ __global__ void IBRKernel(
 /*
 Uses the generated intervals and evolves them further. This is only used for large arrays (>2^20 elements).
 */
+template<class OpTp>
 __global__ void IBRContKernel(
-    data_t *table, interval_t *inputIntervals, interval_t *outputIntervals, int tableLen, int phase,
+    typename OpTp::ElTp *table, interval_t *inputIntervals, interval_t *outputIntervals, int tableLen, int phase,
     int stepStart, int stepEnd
 )
 {
@@ -265,7 +272,7 @@ __global__ void IBRContKernel(
     __syncthreads();
 
     // 1 << (phase - stepStart) picks up where it left off
-    generateIntervals(table, subBlockSize / 2, 1 << stepEnd, 1 << (phase - stepStart), activeThreadsPerBlock);
+    generateIntervals<OpTp>(table, subBlockSize / 2, 1 << stepEnd, 1 << (phase - stepStart), activeThreadsPerBlock);
 
     int elemsPerBlock = blockDim.x * ELEMS_PER_THREAD;
     // calculate offset in global intervals array
