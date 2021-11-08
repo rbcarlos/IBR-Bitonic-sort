@@ -161,7 +161,7 @@ int main() {
         // creating a FILE variable
         FILE *fptr;
 
-        fptr = fopen("datasets/mostly_zeros.txt", "r");
+        fptr = fopen("datasets/random_normal.txt", "r");
         for (int i=0; i< n_el; i++)
         {
             fscanf(fptr, "%d", &h_keys[i]);
