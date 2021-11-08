@@ -158,9 +158,6 @@ int main() {
  
         // creating a FILE variable
         FILE *fptr;
-        
-        // integer variable
-        int num;
 
         fptr = fopen("datasets/sorted_seq.txt", "r");
         for (int i=0; i< N_ELEMENTS; i++)
