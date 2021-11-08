@@ -131,16 +131,6 @@ void randomFloats(T* data, int size) {
         data[i] = (T)(rand() - (T)RAND_MAX/2) / (T)RAND_MAX;
     }
 }
-
-void randomPairs(Pair* data, int size) {
-    int maxVal = smaxof(int);
-    int multiplier = maxVal/RAND_MAX;
-    for (int i = 0; i < size; ++i)
-    {
-        data[i].el1 = (rand() - (int)RAND_MAX/2) * multiplier;
-        data[i].el2 = (rand() - (int)RAND_MAX/2) * multiplier;
-    }
-}
  
 int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval *t1)
 {
