@@ -153,18 +153,18 @@ int main() {
         struct timeval t_start, t_end, t_diff;
 
         int size_keys = n_el;
-        int mem_size_keys = size_keys * sizeof(Single<int>::ElTp);
-        Single<int>::ElTp* h_keys = (Single<int>::ElTp*) malloc(mem_size_keys); 
+        int mem_size_keys = size_keys * sizeof(Single<long>::ElTp);
+        Single<long>::ElTp* h_keys = (Single<long>::ElTp*) malloc(mem_size_keys); 
 
         //randomFloats<float>(h_keys, size_keys);
  
         // creating a FILE variable
         FILE *fptr;
 
-        fptr = fopen("datasets/random_uniform.txt", "r");
+        fptr = fopen("datasets/sorted_seq.txt", "r");
         for (int i=0; i< n_el; i++)
         {
-            fscanf(fptr, "%d", &h_keys[i]);
+            fscanf(fptr, "%ld", &h_keys[i]);
         };
         fclose(fptr);
 
@@ -176,7 +176,7 @@ int main() {
         printf("\n");
         */
 
-        Single<int>::ElTp* d_keys;
+        Single<long>::ElTp* d_keys;
         cudaMalloc((void**) &d_keys, mem_size_keys);
 
         cudaMemcpy(d_keys, h_keys, mem_size_keys, cudaMemcpyHostToDevice);
@@ -186,7 +186,7 @@ int main() {
         int intervalsLen = 1 << (stagesAll - stagesBitonicMerge);
 
         // Allocates buffer for keys
-        Single<int>::ElTp* d_keysBuffer;
+        Single<long>::ElTp* d_keysBuffer;
         cudaMalloc((void **)&d_keysBuffer, size_keys * sizeof(*d_keysBuffer));
 
         // Memory needed for storing intervals
@@ -198,7 +198,7 @@ int main() {
         gettimeofday(&t_start, NULL); 
 
         for(int i=0; i<GPU_RUNS; i++){
-            IBR_binotic_sort<Single<int> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
+            IBR_binotic_sort<Single<long> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
         }
         cudaDeviceSynchronize();
 
