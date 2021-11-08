@@ -3,7 +3,7 @@ CXX        = nvcc -O3 -arch=compute_35
 SRC1 = main.cu
 SOURCES_CPP = main.cu
 HELPERS     =  kernels.cu.h constants.h
-EXECUTABLE1 = bitonic-search
+EXECUTABLE1 = bitonic-sort
 
 default: compile run
 
