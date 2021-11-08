@@ -127,8 +127,8 @@ inline __device__ int findQ(typename OpTp::ElTp* keys, interval_t interval, int 
         typename OpTp::ElTp el0 = get(keys, interval, mid);
         typename OpTp::ElTp el1 = get(keys, interval, mid + subBlockHalfLen);
 
-        OpTp::compareQ(el0, el1, asc, mid, &s, &e);
-        /*
+        //OpTp::compareQ(el0, el1, asc, mid, &s, &e);
+        
         if (asc ? (el0 > el1) : (el0 < el1))
         {
             s = mid + 1;
@@ -137,7 +137,7 @@ inline __device__ int findQ(typename OpTp::ElTp* keys, interval_t interval, int 
         {
             e = mid;
         }
-        */
+        
     }
 
     return s;
