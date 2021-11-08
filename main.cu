@@ -154,7 +154,7 @@ int main() {
         int mem_size_keys = size_keys * sizeof(float);
         Single<float>::ElTp* h_keys = (Single<float>::ElTp*) malloc(mem_size_keys); 
 
-        randomInts<float>(h_keys, size_keys);
+        randomFloats<float>(h_keys, size_keys);
         /*
         printf("Random keys:\n");
         for(int i = 0; i<size_keys; i++ ){
