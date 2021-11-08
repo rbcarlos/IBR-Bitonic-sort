@@ -145,12 +145,14 @@ int main() {
 
     srand(2006);
 
-    // test float
+    // test
+    for(int j=10; j<=20; j++)
     {
+        int n_el = pow((double)2, (double)j);
         unsigned long int elapsed;
         struct timeval t_start, t_end, t_diff;
 
-        int size_keys = N_ELEMENTS;
+        int size_keys = n_el;
         int mem_size_keys = size_keys * sizeof(Single<int>::ElTp);
         Single<int>::ElTp* h_keys = (Single<int>::ElTp*) malloc(mem_size_keys); 
 
@@ -160,7 +162,7 @@ int main() {
         FILE *fptr;
 
         fptr = fopen("datasets/sorted_seq.txt", "r");
-        for (int i=0; i< N_ELEMENTS; i++)
+        for (int i=0; i< n_el; i++)
         {
             fscanf(fptr, "%d", &h_keys[i]);
         };
