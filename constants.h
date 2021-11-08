@@ -2,9 +2,10 @@
 #define CONSTANTS_BITONIC_SORT_H
 
 typedef struct Interval interval_t;
-typedef int data_t;
-#define N_ELEMENTS 1024
+typedef double data_t;
+#define DATA_PATH "datasets/floats/random_uniform.txt"
 #define GPU_RUNS 100
+
 
 struct Interval
 {

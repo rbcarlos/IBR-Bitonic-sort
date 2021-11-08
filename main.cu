@@ -153,8 +153,8 @@ int main() {
         struct timeval t_start, t_end, t_diff;
 
         int size_keys = n_el;
-        int mem_size_keys = size_keys * sizeof(Single<double>::ElTp);
-        Single<double>::ElTp* h_keys = (Single<double>::ElTp*) malloc(mem_size_keys); 
+        int mem_size_keys = size_keys * sizeof(Single<data_t>::ElTp);
+        Single<data_t>::ElTp* h_keys = (Single<data_t>::ElTp*) malloc(mem_size_keys); 
 
         //randomFloats<float>(h_keys, size_keys);
  
@@ -176,7 +176,7 @@ int main() {
         printf("\n");
         */
 
-        Single<double>::ElTp* d_keys;
+        Single<data_t>::ElTp* d_keys;
         cudaMalloc((void**) &d_keys, mem_size_keys);
 
         cudaMemcpy(d_keys, h_keys, mem_size_keys, cudaMemcpyHostToDevice);
@@ -186,7 +186,7 @@ int main() {
         int intervalsLen = 1 << (stagesAll - stagesBitonicMerge);
 
         // Allocates buffer for keys
-        Single<double>::ElTp* d_keysBuffer;
+        Single<data_t>::ElTp* d_keysBuffer;
         cudaMalloc((void **)&d_keysBuffer, size_keys * sizeof(*d_keysBuffer));
 
         // Memory needed for storing intervals
@@ -198,7 +198,7 @@ int main() {
         gettimeofday(&t_start, NULL); 
 
         for(int i=0; i<GPU_RUNS; i++){
-            IBR_binotic_sort<Single<double> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
+            IBR_binotic_sort<Single<data_t> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
         }
         cudaDeviceSynchronize();
 
@@ -208,7 +208,7 @@ int main() {
 
         cudaMemcpy(h_keys, d_keys, mem_size_keys, cudaMemcpyDeviceToHost);
 
-        printf("Bitonic sort on %d elements (type int) runs in: %lu microsecs\n", size_keys, elapsed);
+        printf("Bitonic sort on %d elements (type double) runs in: %lu microsecs\n", size_keys, elapsed);
 
         /*
         printf("Sorted keys:\n");

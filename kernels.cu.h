@@ -31,21 +31,6 @@ class Single {
 };
 
 /*
-Compares 2 elements and exchanges them according to asc.
-*/
-/*
-inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
-{
-    if (asc ? (*elem1 > *elem2) : (*elem1 < *elem2))
-    {
-        data_t temp = *elem1;
-        *elem1 = *elem2;
-        *elem2 = temp;
-    }
-}
-*/
-
-/*
 Sorts the elements using a regular bitonic sort until the subblocks are too large to be processed in shared memory
 */
 template<class OpTp>
@@ -131,16 +116,6 @@ inline __device__ int findQ(typename OpTp::ElTp* keys, interval_t interval, int 
         typename OpTp::ElTp el1 = get<OpTp>(keys, interval, mid + subBlockHalfLen);
 
         OpTp::compareQ(el0, el1, asc, mid, &s, &e);
-        /*
-        if (asc ? (el0 > el1) : (el0 < el1))
-        {
-            s = mid + 1;
-        }
-        else
-        {
-            e = mid;
-        }
-        */
         
     }
 
