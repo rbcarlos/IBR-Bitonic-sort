@@ -143,7 +143,7 @@ int main() {
     }
     printf("\n");
     */
-    data_t* d_keys;
+    Single<int>::ElTp* d_keys;
     cudaMalloc((void**) &d_keys, mem_size_keys);
 
     cudaMemcpy(d_keys, h_keys, mem_size_keys, cudaMemcpyHostToDevice);
@@ -153,7 +153,7 @@ int main() {
     int intervalsLen = 1 << (stagesAll - stagesBitonicMerge);
 
     // Allocates buffer for keys
-    data_t* d_keysBuffer;
+    Single<int>::ElTp* d_keysBuffer;
     cudaMalloc((void **)&d_keysBuffer, size_keys * sizeof(*d_keysBuffer));
 
     // Memory needed for storing intervals
