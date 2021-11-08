@@ -19,7 +19,7 @@ class Single {
         }
         static __device__ __host__ inline void compareQ(ElTp *elem1, ElTp *elem2, bool asc, int mid, int *s, int *e) 
         {
-            if (asc ? (elem1 > elem2) : (elem1 < elem2))
+            if (asc ? (*elem1 > *elem2) : (*elem1 < *elem2))
             {
                 *s = mid + 1;
             }
