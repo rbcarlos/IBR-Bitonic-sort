@@ -161,7 +161,7 @@ int main() {
         // creating a FILE variable
         FILE *fptr;
 
-        fptr = fopen("datasets/reverse_sorted_seq.txt", "r");
+        fptr = fopen("datasets/mostly_zeros.txt", "r");
         for (int i=0; i< n_el; i++)
         {
             fscanf(fptr, "%ld", &h_keys[i]);
