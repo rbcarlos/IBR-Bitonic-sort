@@ -100,7 +100,8 @@ __global__ void BS_firstStagesKernel(typename OpTp::ElTp *keys)
 /*
 returns an element from interval by index
 */
-__device__ data_t get(data_t *keys, interval_t interval, int index)
+template<class OpTp>
+__device__ typename OpTp::ElTp get(typename OpTp::ElTp *keys, interval_t interval, int index)
 {
     bool useInterval1 = index >= interval.length0;
     int offset = useInterval1 ? interval.offset1 : interval.offset0;
@@ -124,8 +125,8 @@ inline __device__ int findQ(typename OpTp::ElTp* keys, interval_t interval, int 
     while (s < e)
     {
         int mid = s + (e - s) / 2;
-        typename OpTp::ElTp el0 = get(keys, interval, mid);
-        typename OpTp::ElTp el1 = get(keys, interval, mid + subBlockHalfLen);
+        typename OpTp::ElTp el0 = get<OpTp>(keys, interval, mid);
+        typename OpTp::ElTp el1 = get<OpTp>(keys, interval, mid + subBlockHalfLen);
 
         //OpTp::compareQ(el0, el1, asc, mid, &s, &e);
         
