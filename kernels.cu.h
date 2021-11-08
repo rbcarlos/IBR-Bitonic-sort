@@ -33,6 +33,7 @@ class Single {
 /*
 Compares 2 elements and exchanges them according to asc.
 */
+/*
 inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
 {
     if (asc ? (*elem1 > *elem2) : (*elem1 < *elem2))
@@ -42,6 +43,7 @@ inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
         *elem2 = temp;
     }
 }
+*/
 
 /*
 Sorts the elements using a regular bitonic sort until the subblocks are too large to be processed in shared memory

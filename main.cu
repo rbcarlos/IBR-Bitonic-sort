@@ -111,9 +111,10 @@ void IBR_binotic_sort(
     
 }
 
-void randomInit(data_t* data, int size) {
+template<class T>
+void randomInit(T* data, int size) {
     for (int i = 0; i < size; ++i)
-    data[i] = rand() - (data_t)RAND_MAX/2;
+    data[i] = rand() - (T)RAND_MAX/2;
  }
  
 int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval *t1)
@@ -136,7 +137,7 @@ int main() {
     int mem_size_keys = size_keys * sizeof(data_t);
     Single<int>::ElTp* h_keys = (Single<int>::ElTp*) malloc(mem_size_keys); 
 
-    randomInit(h_keys, size_keys);
+    randomInit<int>(h_keys, size_keys);
     /*
     printf("Random keys:\n");
     for(int i = 0; i<size_keys; i++ ){
