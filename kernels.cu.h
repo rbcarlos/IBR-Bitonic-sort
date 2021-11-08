@@ -30,52 +30,6 @@ class Single {
         }
 };
 
-template<class T>
-class Tuple {
-    public:
-        typedef T ElTp;
-        static __device__ __host__ inline void compareExchange(Pair *elem1, Pair *elem2, bool asc)
-        { 
-            if (asc ? (*elem1.el1 > *elem2.el1) : (*elem1.el1 < *elem2.el1))
-            {
-                Pair temp = *elem1;
-                *elem1 = *elem2;
-                *elem2 = temp;
-            }
-            else if (*elem1.el1 == *elem2.el1)
-            {
-                if (asc ? (*elem1.el2 > *elem2.el2) : (*elem1.el2 < *elem2.el2))
-                {
-                    Pair temp = *elem1;
-                    *elem1 = *elem2;
-                    *elem2 = temp;
-                }
-            }    
-        }
-        static __device__ __host__ inline void compareQ(Pair elem1, Pair elem2, bool asc, int mid, int *s, int *e) 
-        {
-            if (asc ? (elem1.el1 > elem2.el1) : (elem1.el1 < elem2.el1))
-            {
-                *s = mid + 1;
-            }
-            else if (elem1.el1 == elem2.el1)
-            {
-                if (asc ? (elem1.el2 > elem2.el2) : (elem1.el2 < elem2.el2))
-                {
-                    *s = mid + 1;
-                }
-                else
-                {
-                    *e = mid;
-                }
-            }
-            else
-            {
-                *e = mid;
-            }
-        }
-};
-
 /*
 Compares 2 elements and exchanges them according to asc.
 */
