@@ -79,11 +79,11 @@ __global__ void BS_firstStagesKernel(typename OpTp::ElTp *keys)
 
                 if (direction)
                 {
-                    compareExchange(&sortTile[index], &sortTile[index + stride], true);
+                    OpTp::compareExchange(&sortTile[index], &sortTile[index + stride], true);
                 }
                 else
                 {
-                    compareExchange(&sortTile[index], &sortTile[index + stride], false);
+                    OpTp::compareExchange(&sortTile[index], &sortTile[index + stride], false);
                 }
             }
             __syncthreads();
