@@ -145,6 +145,18 @@ int main() {
 
     srand(2006);
 
+    // creating a FILE variable
+    FILE *fptr;
+    
+    // integer variable
+    int num;
+
+    fptr = fopen("datasets/sorted_seq.txt", "r");
+    for (int i=0 i< 1000; i++){
+        num = getw(fptr);
+        printf("%d\n", num);
+    }
+
     // test float
     {
         unsigned long int elapsed;
