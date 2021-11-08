@@ -146,7 +146,7 @@ int main() {
     srand(2006);
 
     // test
-    for(int j=10; j<=11; j++)
+    for(int j=10; j<=20; j++)
     {
         int n_el = pow((double)2, (double)j);
         unsigned long int elapsed;
