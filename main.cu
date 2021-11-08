@@ -145,13 +145,13 @@ int main() {
 
     srand(2006);
 
-    // test long
+    // test float
     {
         unsigned long int elapsed;
         struct timeval t_start, t_end, t_diff;
 
         int size_keys = N_ELEMENTS;
-        int mem_size_keys = size_keys * sizeof(double);
+        int mem_size_keys = size_keys * sizeof(Single<double>::ElTp);
         Single<double>::ElTp* h_keys = (Single<double>::ElTp*) malloc(mem_size_keys); 
 
         randomFloats<double>(h_keys, size_keys);
