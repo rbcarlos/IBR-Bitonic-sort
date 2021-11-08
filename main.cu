@@ -168,13 +168,13 @@ int main() {
         };
         fclose(fptr);
 
-        
+        /*
         printf("Unsorted keys:\n");
         for(int i = 0; i<size_keys; i++ ){
             printf("%lf, ", h_keys[i]);
         }
         printf("\n");
-        
+        */
 
         Single<data_t>::ElTp* d_keys;
         cudaMalloc((void**) &d_keys, mem_size_keys);
@@ -210,13 +210,13 @@ int main() {
 
         printf("Bitonic sort on %d elements (type double) runs in: %lu microsecs\n", size_keys, elapsed);
 
-        
+        /*
         printf("Sorted keys:\n");
         for(int i = 0; i<size_keys; i++ ){
             printf("%lf, ", h_keys[i]);
         }
         printf("\n");
-        
+        */
 
         for(int i = 0; i<size_keys-1; i++) {
             if(h_keys[i] > h_keys[i+1]) {
