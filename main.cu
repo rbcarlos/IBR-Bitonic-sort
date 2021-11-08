@@ -154,7 +154,7 @@ int main() {
     fptr = fopen("datasets/sorted_seq.txt", "r");
     for (int i=0; i< 10; i++)
     {
-        fscanf(fp, "%d", num);
+        fscanf(fptr, "%d", num);
         printf("%d\n", num);
     };
     fclose(fptr);
