@@ -128,7 +128,7 @@ template<class T>
 void randomFloats(T* data, int size) {
     for (int i = 0; i < size; ++i)
     {
-        data[i] = (rand() - (T)RAND_MAX/2) / (T)RAND_MAX;
+        data[i] = (T)(rand() - (T)RAND_MAX/2) / (T)RAND_MAX;
     }
 }
  
