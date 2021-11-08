@@ -14,7 +14,7 @@ struct Interval
     int length1;
 };
 
-struct Pair
+typedef struct Pair
 {
     int el1;
     int el2;
