@@ -127,7 +127,9 @@ void randomInts(T* data, int size) {
 template<class T>
 void randomFloats(T* data, int size) {
     for (int i = 0; i < size; ++i)
-    data[i] = rand() - (T)RAND_MAX/2;
+    {
+        data[i] = (rand() - (T)RAND_MAX/2) / (T)RAND_MAX;
+    }
 }
  
 int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval *t1)
@@ -149,10 +151,10 @@ int main() {
         struct timeval t_start, t_end, t_diff;
 
         int size_keys = N_ELEMENTS;
-        int mem_size_keys = size_keys * sizeof(long);
-        Single<long>::ElTp* h_keys = (Single<long>::ElTp*) malloc(mem_size_keys); 
+        int mem_size_keys = size_keys * sizeof(int);
+        Single<int>::ElTp* h_keys = (Single<int>::ElTp*) malloc(mem_size_keys); 
 
-        randomInts<long>(h_keys, size_keys);
+        randomInts<int>(h_keys, size_keys);
         /*
         printf("Random keys:\n");
         for(int i = 0; i<size_keys; i++ ){
@@ -160,7 +162,7 @@ int main() {
         }
         printf("\n");
         */
-        Single<long>::ElTp* d_keys;
+        Single<int>::ElTp* d_keys;
         cudaMalloc((void**) &d_keys, mem_size_keys);
 
         cudaMemcpy(d_keys, h_keys, mem_size_keys, cudaMemcpyHostToDevice);
@@ -170,7 +172,7 @@ int main() {
         int intervalsLen = 1 << (stagesAll - stagesBitonicMerge);
 
         // Allocates buffer for keys
-        Single<long>::ElTp* d_keysBuffer;
+        Single<int>::ElTp* d_keysBuffer;
         cudaMalloc((void **)&d_keysBuffer, size_keys * sizeof(*d_keysBuffer));
 
         // Memory needed for storing intervals
@@ -182,7 +184,7 @@ int main() {
         gettimeofday(&t_start, NULL); 
 
         for(int i=0; i<GPU_RUNS; i++){
-            IBR_binotic_sort<Single<long> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
+            IBR_binotic_sort<Single<int> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
         }
         cudaDeviceSynchronize();
 
@@ -192,12 +194,12 @@ int main() {
 
         cudaMemcpy(h_keys, d_keys, mem_size_keys, cudaMemcpyDeviceToHost);
 
-        printf("Bitonic sort on %d elements (type long) runs in: %lu microsecs\n", size_keys, elapsed);
+        printf("Bitonic sort on %d elements (type int) runs in: %lu microsecs\n", size_keys, elapsed);
 
         
         printf("Sorted keys:\n");
         for(int i = 0; i<size_keys; i++ ){
-            printf("%ld, ", h_keys[i]);
+            printf("%d, ", h_keys[i]);
         }
         printf("\n");
         
