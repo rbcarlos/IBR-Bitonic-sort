@@ -46,11 +46,11 @@ inline __device__ void compareExchange(data_t *elem1, data_t *elem2, bool asc)
 /*
 Sorts the elements using a regular bitonic sort until the subblocks are too large to be processed in shared memory
 */
-template<class T>
-__global__ void BS_firstStagesKernel(T *keys)
+template<class OpTp>
+__global__ void BS_firstStagesKernel(typename OpTp::ElTp *keys)
 {
     // dynamically allocate the shared memory
-    extern __shared__ T sortTile[];
+    extern __shared__ typename OpTp::ElTp sortTile[];
 
     //calculate the offset and length of a block of data processed by the current block
     int elemsPerBlock = N_THREADS * ELEMS_PER_THREAD;
