@@ -18,7 +18,7 @@ struct Pair
 {
     int el1;
     int el2;
-}
+};
 
 
 #define N_THREADS 256
