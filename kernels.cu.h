@@ -17,7 +17,7 @@ class Single {
                 *elem2 = temp;
             }    
         }
-        static __device__ __host__ inline void compareQ(ElTp *elem1, ElTp *elem2, bool asc, int *mid, int *s, int *e) 
+        static __device__ __host__ inline void compareQ(ElTp *elem1, ElTp *elem2, bool asc, int mid, int *s, int *e) 
         {
             if (asc ? (elem1 > elem2) : (elem1 < elem2))
             {
@@ -127,7 +127,7 @@ inline __device__ int findQ(typename OpTp::ElTp* keys, interval_t interval, int 
         typename OpTp::ElTp el0 = get(keys, interval, mid);
         typename OpTp::ElTp el1 = get(keys, interval, mid + subBlockHalfLen);
 
-        OpTp::compareQ(el0, el1, asc, mid, s, e);
+        OpTp::compareQ(el0, el1, asc, mid, &s, &e);
         /*
         if (asc ? (el0 > el1) : (el0 < el1))
         {
