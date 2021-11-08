@@ -103,7 +103,7 @@ void IBR_binotic_sort(
         //=========================================================================================
 
         // Exchanges keys
-        data_t *tempTable = d_keys;
+        typename OpTp::ElTp *tempTable = d_keys;
         d_keys = d_keysBuffer;
         d_keysBuffer = tempTable;
         
