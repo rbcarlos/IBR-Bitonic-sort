@@ -10,8 +10,9 @@
 /*
 Sorts data with parallel adaptive bitonic sort.
 */
+template<class OpTp>
 void IBR_binotic_sort(
-    data_t *&d_keys, data_t *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
+    OpTp::ElTp *&d_keys, OpTp::ElTp *&d_keysBuffer, interval_t *d_intervals, interval_t *d_intervalsBuffer, int arrayLength
 )
 {
     int numBlocks, numThreads, sharedMemSize;
@@ -165,7 +166,7 @@ int main() {
     gettimeofday(&t_start, NULL); 
 
     for(int i=0; i<GPU_RUNS; i++){
-        IBR_binotic_sort(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
+        IBR_binotic_sort<Single<int> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
     }
     cudaDeviceSynchronize();
 
