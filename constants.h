@@ -14,6 +14,13 @@ struct Interval
     int length1;
 };
 
+struct Pair
+{
+    int el1;
+    int el2;
+}
+
+
 #define N_THREADS 256
 #define ELEMS_PER_THREAD 4
 
