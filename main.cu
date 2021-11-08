@@ -7,8 +7,8 @@
 #include "constants.h"
 #include "kernels.cu.h"
 
-#define umaxof(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | \
-                    (0xFULL << ((sizeof(t) * 8ULL) - 4ULL)))
+#define smaxof(t) (((0x1ULL << ((sizeof(t) * 8ULL) - 1ULL)) - 1ULL) | \
+                    (0x7ULL << ((sizeof(t) * 8ULL) - 4ULL)))
 
 /*
 Sorts data with parallel adaptive bitonic sort.
@@ -116,7 +116,7 @@ void IBR_binotic_sort(
 
 template<class T>
 void randomInts(T* data, int size) {
-    T maxVal = umaxof(T);
+    T maxVal = smaxof(T);
     T multiplier = maxVal/RAND_MAX;
     for (int i = 0; i < size; ++i)
     {
