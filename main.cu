@@ -126,7 +126,6 @@ void randomInts(T* data, int size) {
 
 template<class T>
 void randomFloats(T* data, int size) {
-    T maxVal = umaxof(T);
     for (int i = 0; i < size; ++i)
     data[i] = rand() - (T)RAND_MAX/2;
 }
