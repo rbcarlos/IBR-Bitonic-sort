@@ -143,7 +143,7 @@ int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval 
 
 int main() {
 
-    //srand(2006);
+    srand(2006);
 
     // creating a FILE variable
     FILE *fptr;
@@ -154,7 +154,7 @@ int main() {
     fptr = fopen("datasets/sorted_seq.txt", "r");
     for (int i=0; i< 10; i++)
     {
-        num = getw(fptr);
+        fscanf(fp, "%d", num);
         printf("%d\n", num);
     };
     fclose(fptr);
