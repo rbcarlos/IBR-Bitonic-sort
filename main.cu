@@ -96,7 +96,7 @@ void IBR_binotic_sort(
         numBlocks = arrayLength/ elemsPerBlock;
         numThreads = N_THREADS;
 
-        IBR_2_BSKernel<<<numBlocks, numThreads, sharedMemSize>>>(d_keys, d_keysBuffer, d_intervals, stage);
+        IBR_2_BSKernel<OpTp><<<numBlocks, numThreads, sharedMemSize>>>(d_keys, d_keysBuffer, d_intervals, stage);
 
         //=========================================================================================
         //=========================================================================================

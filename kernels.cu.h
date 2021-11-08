@@ -289,9 +289,10 @@ __global__ void IBRContKernel(
 /*
 Merges the blocks using the intervals
 */
-__global__ void IBR_2_BSKernel(data_t *keys, data_t *keysBuffer, interval_t *intervals, int phase)
+template<class OpTp>
+__global__ void IBR_2_BSKernel(typename OpTp::ElTp *keys, typename OpTp::ElTp *keysBuffer, interval_t *intervals, int phase)
 {
-    extern __shared__ data_t mergeTile[];
+    extern __shared__ typename OpTp::ElTp mergeTile[];
     interval_t interval = intervals[blockIdx.x];
 
     // Elements inside same sub-block have to be ordered in same direction
@@ -315,11 +316,11 @@ __global__ void IBR_2_BSKernel(data_t *keys, data_t *keysBuffer, interval_t *int
 
             if (orderAsc)
             {
-                compareExchange(&mergeTile[index], &mergeTile[index + stride], true);
+                OpTp::compareExchange(&mergeTile[index], &mergeTile[index + stride], true);
             }
             else
             {
-                compareExchange(&mergeTile[index], &mergeTile[index + stride], false);
+                OpTp::compareExchange(&mergeTile[index], &mergeTile[index + stride], false);
             }
         }
         __syncthreads();
