@@ -21,11 +21,11 @@ class Single {
         {
             if (asc ? (elem1 > elem2) : (elem1 < elem2))
             {
-                s = mid + 1;
+                *s = mid + 1;
             }
             else
             {
-                e = mid;
+                *e = mid;
             }
         }
 };
