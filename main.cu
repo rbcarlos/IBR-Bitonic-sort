@@ -152,7 +152,7 @@ int main() {
     int num;
 
     fptr = fopen("datasets/sorted_seq.txt", "r");
-    for (int i=0; i< 1000; i++)
+    for (int i=0; i< 10; i++)
     {
         num = getw(fptr);
         printf("%d\n", num);
