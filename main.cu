@@ -157,6 +157,7 @@ int main() {
         num = getw(fptr);
         printf("%d\n", num);
     };
+    fclose(fptr);
 
     // test float
     {
