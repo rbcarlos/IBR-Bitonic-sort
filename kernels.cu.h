@@ -34,11 +34,11 @@ template<class T>
 class Tuple {
     public:
         typedef T ElTp;
-        static __device__ __host__ inline void compareExchange(ElTp *elem1, ElTp *elem2, bool asc)
+        static __device__ __host__ inline void compareExchange(Pair *elem1, Pair *elem2, bool asc)
         { 
             if (asc ? (*elem1.el1 > *elem2.el1) : (*elem1.el1 < *elem2.el1))
             {
-                ElTp temp = *elem1;
+                Pair temp = *elem1;
                 *elem1 = *elem2;
                 *elem2 = temp;
             }
@@ -46,13 +46,13 @@ class Tuple {
             {
                 if (asc ? (*elem1.el2 > *elem2.el2) : (*elem1.el2 < *elem2.el2))
                 {
-                    ElTp temp = *elem1;
+                    Pair temp = *elem1;
                     *elem1 = *elem2;
                     *elem2 = temp;
                 }
             }    
         }
-        static __device__ __host__ inline void compareQ(ElTp elem1, ElTp elem2, bool asc, int mid, int *s, int *e) 
+        static __device__ __host__ inline void compareQ(Pair elem1, Pair elem2, bool asc, int mid, int *s, int *e) 
         {
             if (asc ? (elem1.el1 > elem2.el1) : (elem1.el1 < elem2.el1))
             {
