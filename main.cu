@@ -146,37 +146,37 @@ int main() {
     srand(2006);
 
     // test
-    for(int j=10; j<=20; j++)
+    for(int j=10; j<=11; j++)
     {
         int n_el = pow((double)2, (double)j);
         unsigned long int elapsed;
         struct timeval t_start, t_end, t_diff;
 
         int size_keys = n_el;
-        int mem_size_keys = size_keys * sizeof(Single<long>::ElTp);
-        Single<long>::ElTp* h_keys = (Single<long>::ElTp*) malloc(mem_size_keys); 
+        int mem_size_keys = size_keys * sizeof(Single<float>::ElTp);
+        Single<float>::ElTp* h_keys = (Single<float>::ElTp*) malloc(mem_size_keys); 
 
         //randomFloats<float>(h_keys, size_keys);
  
         // creating a FILE variable
         FILE *fptr;
 
-        fptr = fopen("datasets/random_uniform.txt", "r");
+        fptr = fopen("datasets/floats/random_uniform.txt", "r");
         for (int i=0; i< n_el; i++)
         {
-            fscanf(fptr, "%ld", &h_keys[i]);
+            fscanf(fptr, "%f", &h_keys[i]);
         };
         fclose(fptr);
 
-        /*
+        
         printf("Unsorted keys:\n");
         for(int i = 0; i<size_keys; i++ ){
-            printf("%ld, ", h_keys[i]);
+            printf("%f, ", h_keys[i]);
         }
         printf("\n");
-        */
+        
 
-        Single<long>::ElTp* d_keys;
+        Single<float>::ElTp* d_keys;
         cudaMalloc((void**) &d_keys, mem_size_keys);
 
         cudaMemcpy(d_keys, h_keys, mem_size_keys, cudaMemcpyHostToDevice);
@@ -186,7 +186,7 @@ int main() {
         int intervalsLen = 1 << (stagesAll - stagesBitonicMerge);
 
         // Allocates buffer for keys
-        Single<long>::ElTp* d_keysBuffer;
+        Single<float>::ElTp* d_keysBuffer;
         cudaMalloc((void **)&d_keysBuffer, size_keys * sizeof(*d_keysBuffer));
 
         // Memory needed for storing intervals
@@ -198,7 +198,7 @@ int main() {
         gettimeofday(&t_start, NULL); 
 
         for(int i=0; i<GPU_RUNS; i++){
-            IBR_binotic_sort<Single<long> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
+            IBR_binotic_sort<Single<float> >(d_keys, d_keysBuffer, d_intervals, d_intervalsBuffer, size_keys);
         }
         cudaDeviceSynchronize();
 
@@ -210,13 +210,13 @@ int main() {
 
         printf("Bitonic sort on %d elements (type int) runs in: %lu microsecs\n", size_keys, elapsed);
 
-        /*
+        
         printf("Sorted keys:\n");
         for(int i = 0; i<size_keys; i++ ){
-            printf("%ld, ", h_keys[i]);
+            printf("%f, ", h_keys[i]);
         }
         printf("\n");
-        */
+        
 
         for(int i = 0; i<size_keys-1; i++) {
             if(h_keys[i] > h_keys[i+1]) {
