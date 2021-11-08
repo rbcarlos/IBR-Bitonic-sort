@@ -304,7 +304,7 @@ __global__ void IBR_2_BSKernel(typename OpTp::ElTp *keys, typename OpTp::ElTp *k
     // Loads data from global to shared memory
     for (int tx = threadIdx.x; tx < elemsPerBlock; tx += N_THREADS)
     {
-        mergeTile[tx] = get(keys, interval, tx);
+        mergeTile[tx] = get<OpTp>(keys, interval, tx);
     }
     __syncthreads();
 
